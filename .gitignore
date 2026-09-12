@@ -1,0 +1,10 @@
+# Dependencies — restored with `npm ci` from package-lock.json
+node_modules/
+
+# Office lock files, which OneDrive leaves behind
+~$*
+
+# OS and editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini

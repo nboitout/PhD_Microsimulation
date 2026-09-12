@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Figure contact sheet (development only)</title>
+<link rel="stylesheet" href="styles.css">
+<style>body{padding:20px}h2{font-family:var(--sans);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);margin:0 0 6px}section{max-width:860px;margin:0 0 28px}</style>
+</head><body>
+<div id="host"></div>
+<script src="data/run.js"></script><script src="data/derived.js"></script><script src="data/microstructure.js"></script>
+<script src="charts.js"></script><script src="figures.js"></script>
+<script>
+const want=(new URLSearchParams(location.search).get('f')||'price').split(',');
+const defs={
+ price:['<div id="fig-price"></div>',()=>Charts.priceChart(document.getElementById('fig-price'),RUN,DERIVED)],
+ returns:['<canvas id="fig-returns" height="230"></canvas>',()=>Charts.returnsSpike(document.getElementById('fig-returns'),RUN.ret)],
+ dist:['<div id="fig-dist"></div>',()=>Charts.distChart(document.getElementById('fig-dist'),DERIVED.hist)],
+ acf:['<div id="fig-acf"></div>',()=>Charts.acfChart(document.getElementById('fig-acf'),DERIVED)],
+ scatter:['<div id="fig-scatter"></div>',()=>Charts.scatterChart(document.getElementById('fig-scatter'),DERIVED)],
+ strategies:['<div id="strategy-diagram"></div>',()=>Figures.strategyDiagram(document.getElementById('strategy-diagram'))],
+ clock:['<div id="clock-race"></div><p id="race-status"></p><button class="btn" id="race-draw">draw</button><button class="btn" id="race-reset">reset</button>',()=>Figures.clockRace(document.getElementById('clock-race'),document.getElementById('race-status'),{draw:document.getElementById('race-draw'),reset:document.getElementById('race-reset')})],
+ biztime:['<div id="business-time"></div>',()=>Figures.businessTime(document.getElementById('business-time'))],
+ tick:['<div id="tick-figure"></div><button class="btn" id="tick-step">step</button><button class="btn" id="tick-reset">reset</button>',()=>Figures.tickFigure(document.getElementById('tick-figure'),{step:document.getElementById('tick-step'),reset:document.getElementById('tick-reset')})],
+};
+const host=document.getElementById('host');
+host.innerHTML=want.map(k=>defs[k]?`<section><h2>${k}</h2>${defs[k][0]}</section>`:'').join('');
+want.forEach(k=>{ if(defs[k]) defs[k][1](); });
+</script></body></html>

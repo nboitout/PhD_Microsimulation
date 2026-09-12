@@ -1,0 +1,17 @@
+{
+  "name": "boitout-delahaut-2003-microsimulation",
+  "version": "1.0.0",
+  "description": "Presentation site for Chapter 2 of N. Boitout's 2003 dissertation, with the agent-based FX microsimulation re-implemented so its figures can be regenerated.",
+  "scripts": {
+    "data": "node engine/generate.mjs",
+    "site": "node engine/build-site.mjs",
+    "build": "node engine/generate.mjs && node engine/build-site.mjs",
+    "serve": "python -m http.server 8123 --directory site"
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "katex": "^0.18.7"
+  },
+  "private": true
+}

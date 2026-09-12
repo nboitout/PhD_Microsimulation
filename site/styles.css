@@ -1,0 +1,549 @@
+/* ---------------------------------------------------------------------------
+   Agent-Based Financial Market Simulation (2003) — presentation site
+   A single scrolling document. Restrained, typographic, two themes.
+   --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces and ink */
+  --bg: #fcfbf8;
+  --bg-sunk: #f5f2ea;
+  --ink: #1d1c19;
+  --ink-soft: #4a4741;
+  --ink-mute: #6f6b62;
+  --rule: #e0dbd0;
+  --rule-strong: #c9c2b4;
+
+  /* Data series. These five carry meaning and never change role. */
+  --price: #1d4e6b;        /* the market price */
+  --fundamental: #a07a3c;  /* the fundamental value */
+  --optimist: #2f8f7d;     /* optimistic chartists */
+  --pessimist: #c05a3e;    /* pessimistic chartists */
+  --fundamentalist: #77798a; /* fundamentalists */
+  --secondary: #948f85;    /* volume and other supporting series */
+  --highlight: #b8892d;    /* the winning clock, an annotation */
+
+  --shade: rgba(160, 122, 60, 0.13); /* turbulent-stretch shading */
+  --focus: #1d4e6b;
+
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, "Times New Roman", serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  --measure: 34rem;   /* ~68 characters at this size */
+  --wide: 58rem;
+  --gutter: 1.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121316;
+    --bg-sunk: #1a1c20;
+    --ink: #e9e7e1;
+    --ink-soft: #c3c0b8;
+    --ink-mute: #948f86;
+    --rule: #2c2e33;
+    --rule-strong: #454850;
+
+    --price: #74b6d6;
+    --fundamental: #d8ad69;
+    --optimist: #52c2a8;
+    --pessimist: #e8906f;
+    --fundamentalist: #a5a8b5;
+    --secondary: #8e8a82;
+    --highlight: #e0b258;
+    --shade: rgba(216, 173, 105, 0.14);
+    --focus: #74b6d6;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121316;
+  --bg-sunk: #1a1c20;
+  --ink: #e9e7e1;
+  --ink-soft: #c3c0b8;
+  --ink-mute: #948f86;
+  --rule: #2c2e33;
+  --rule-strong: #454850;
+
+  --price: #74b6d6;
+  --fundamental: #d8ad69;
+  --optimist: #52c2a8;
+  --pessimist: #e8906f;
+  --fundamentalist: #a5a8b5;
+  --secondary: #8e8a82;
+  --highlight: #e0b258;
+  --shade: rgba(216, 173, 105, 0.14);
+  --focus: #74b6d6;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(1rem, 0.97rem + 0.15vw, 1.075rem);
+  line-height: 1.65;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--shade); }
+
+:where(a):focus-visible,
+:where(button, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a { color: inherit; text-decoration-color: var(--rule-strong); text-underline-offset: 0.18em; }
+a:hover { text-decoration-color: currentColor; }
+
+/* --- Layout ------------------------------------------------------------- */
+
+.wrap { max-width: var(--measure); margin-inline: auto; padding-inline: var(--gutter); }
+.wrap-wide { max-width: var(--wide); margin-inline: auto; padding-inline: var(--gutter); }
+
+main > section { padding-block: clamp(3rem, 7vw, 5.5rem); border-top: 1px solid var(--rule); }
+main > section:first-of-type { border-top: 0; }
+
+h1, h2, h3 { font-weight: 600; line-height: 1.2; letter-spacing: -0.012em; }
+
+h1 {
+  font-size: clamp(2rem, 1.4rem + 2.9vw, 3.4rem);
+  margin: 0 0 0.6rem;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+h2 {
+  font-size: clamp(1.45rem, 1.2rem + 1.1vw, 2rem);
+  margin: 0 0 1.1rem;
+  text-wrap: balance;
+}
+h3 {
+  font-size: 1.08rem;
+  margin: 2.2rem 0 0.5rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+p { margin: 0 0 1.15rem; }
+p + h3 { margin-top: 2.4rem; }
+
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin: 0 0 0.9rem;
+}
+
+.lede { font-size: 1.1em; color: var(--ink-soft); }
+
+.term { font-style: italic; }
+
+/* --- Top bar ------------------------------------------------------------ */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar-inner {
+  max-width: var(--wide);
+  margin-inline: auto;
+  padding: 0.5rem var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.topbar-title {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  margin-right: auto;
+}
+.topbar-title span { color: var(--ink-mute); font-weight: 400; }
+
+.sectionnav {
+  display: flex;
+  gap: 0.1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-right: auto;
+}
+.sectionnav::-webkit-scrollbar { display: none; }
+.sectionnav a {
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  color: var(--ink-mute);
+  text-decoration: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.sectionnav a:hover { color: var(--ink); background: var(--bg-sunk); }
+.sectionnav a[aria-current="true"] { color: var(--ink); font-weight: 600; }
+
+.themetoggle {
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  background: none;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.themetoggle:hover { color: var(--ink); border-color: var(--ink-mute); }
+
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--bg); color: var(--ink);
+  padding: 0.6rem 1rem; z-index: 100; border: 1px solid var(--ink);
+}
+.skip:focus { left: 0.5rem; top: 0.5rem; }
+
+/* --- Hero --------------------------------------------------------------- */
+
+.hero { padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2rem, 5vw, 3.5rem); }
+.hero .byline {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.4rem;
+}
+.hero .byline b { font-weight: 600; color: var(--ink); }
+.hero-claim { font-size: 1.15em; max-width: 32rem; }
+.hero-what {
+  font-size: 0.88rem;
+  color: var(--ink-mute);
+  max-width: 30rem;
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 0.9rem;
+  margin-top: 1.8rem;
+}
+
+.hero-figure { margin-top: 2.5rem; }
+.hero-canvas-box {
+  position: relative;
+  width: 100%;
+  height: clamp(170px, 26vw, 250px);
+}
+.hero-canvas-box canvas { width: 100%; height: 100%; display: block; }
+.hero-still { width: 100%; }
+.hero-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  color: var(--ink-mute);
+  margin-top: 0.5rem;
+}
+.swatch {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.swatch::before {
+  content: ""; width: 14px; height: 0; border-top: 2px solid currentColor;
+}
+.swatch.dashed::before { border-top-style: dashed; }
+.swatch.price { color: var(--price); }
+.swatch.fundamental { color: var(--fundamental); }
+.swatch.optimist { color: var(--optimist); }
+.swatch.pessimist { color: var(--pessimist); }
+.swatch.fundamentalist { color: var(--fundamentalist); }
+.swatch.secondary { color: var(--secondary); }
+.swatch b { color: var(--ink-soft); font-weight: 400; }
+
+/* --- Figures ------------------------------------------------------------ */
+
+figure { margin: 2rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+figure canvas { display: block; width: 100%; }
+
+.figscroll { overflow-x: auto; overscroll-behavior-x: contain; }
+.figscroll > * { min-width: 20rem; }
+
+figcaption {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin-top: 0.75rem;
+  max-width: 32rem;
+}
+figcaption .fact {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.provenance {
+  display: block;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--ink-mute);
+  margin-top: 0.5rem;
+}
+
+/* --- The mechanics disclosure ------------------------------------------- */
+
+.mechanics {
+  margin: 2rem 0 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.mechanics > summary {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-soft);
+  padding: 0.8rem 0;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.mechanics > summary::-webkit-details-marker { display: none; }
+.mechanics > summary::before {
+  content: "";
+  width: 0.5rem; height: 0.5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  flex: none;
+  margin-left: 0.15rem;
+}
+.mechanics[open] > summary::before { transform: rotate(45deg); }
+.mechanics > summary:hover { color: var(--ink); }
+.mechanics .mech-body { padding-bottom: 1.4rem; font-size: 0.95rem; }
+.mechanics .mech-body > :last-child { margin-bottom: 0; }
+
+/* --- Math --------------------------------------------------------------- */
+
+.katex { font-size: 1.02em; }
+.mathblock {
+  margin: 1.1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.2rem;
+}
+.mathblock .katex-display { margin: 0.35rem 0; }
+
+/* --- Tables ------------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin: 1.6rem 0; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+caption {
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--ink-mute);
+  padding-bottom: 0.6rem;
+}
+th, td { text-align: left; padding: 0.42rem 0.9rem 0.42rem 0; border-bottom: 1px solid var(--rule); }
+thead th {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 600;
+  border-bottom-color: var(--rule-strong);
+}
+td.num, th.num { font-family: var(--mono); font-size: 0.86em; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+
+.paramtable td:first-child { width: 4.5rem; }
+
+/* --- Lists -------------------------------------------------------------- */
+
+ol.facts { counter-reset: fact; list-style: none; padding: 0; margin: 1.2rem 0; }
+ol.facts li {
+  counter-increment: fact;
+  padding-left: 2.2rem;
+  position: relative;
+  margin-bottom: 0.85rem;
+}
+ol.facts li::before {
+  content: counter(fact);
+  position: absolute; left: 0; top: 0.05em;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-mute);
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  width: 1.5rem; height: 1.5rem;
+  display: grid; place-items: center;
+}
+ol.facts b { font-weight: 600; }
+
+ul.plain { list-style: none; padding: 0; margin: 1.2rem 0; }
+ul.plain li { padding-left: 1.1rem; position: relative; margin-bottom: 0.7rem; }
+ul.plain li::before {
+  content: ""; position: absolute; left: 0; top: 0.72em;
+  width: 0.4rem; height: 1px; background: var(--rule-strong);
+}
+
+.ledger { margin: 1.4rem 0; }
+.ledger > div {
+  border-top: 1px solid var(--rule);
+  padding: 1.1rem 0;
+}
+.ledger > div:last-child { border-bottom: 1px solid var(--rule); }
+.ledger h3 { margin: 0 0 0.35rem; }
+.ledger p { margin: 0; font-size: 0.97rem; color: var(--ink-soft); }
+.ledger .tag {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  color: var(--ink-mute);
+  margin-right: 0.5rem;
+  vertical-align: 0.12em;
+}
+
+/* --- Controls ----------------------------------------------------------- */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem 1.8rem;
+  margin: 1.6rem 0 1.2rem;
+}
+.control label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+.control label .sym { color: var(--ink-mute); font-family: var(--mono); font-size: 0.88em; }
+.control label output { float: right; font-family: var(--mono); font-size: 0.88em; color: var(--ink); }
+.control input[type="range"] { width: 100%; accent-color: var(--price); margin: 0; }
+
+.buttonrow { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.2rem 0; }
+.btn {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  background: none;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+.btn:hover { color: var(--ink); border-color: var(--ink-mute); background: var(--bg-sunk); }
+.btn[aria-pressed="true"] { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.btn.primary { color: var(--bg); background: var(--price); border-color: var(--price); }
+.btn.primary:hover { background: color-mix(in srgb, var(--price) 85%, black); color: var(--bg); }
+
+/* --- Clock race --------------------------------------------------------- */
+
+.clockrace { margin-top: 1.8rem; }
+.clocklabel { font-family: var(--mono); font-size: 0.74rem; fill: var(--ink-mute); }
+.clockwin { font-family: var(--sans); font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.9rem; }
+.clockwin b { color: var(--ink); font-weight: 600; }
+
+/* --- Notes and callouts ------------------------------------------------- */
+
+.note {
+  border-left: 2px solid var(--rule-strong);
+  padding: 0.1rem 0 0.1rem 1rem;
+  margin: 1.5rem 0;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.note strong { color: var(--ink); font-weight: 600; }
+
+.unresolved {
+  font-family: var(--mono);
+  font-size: 0.82em;
+  border-bottom: 1px dotted var(--rule-strong);
+  color: var(--ink-mute);
+  cursor: help;
+}
+
+.biblio { font-size: 0.9rem; column-gap: 2.5rem; }
+.biblio li { margin-bottom: 0.6rem; text-indent: -1.1rem; padding-left: 1.1rem; }
+.biblio ul { list-style: none; padding: 0; }
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding-block: 2.5rem 4rem;
+  font-size: 0.85rem;
+  color: var(--ink-mute);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Chart primitives shared by the generated SVG */
+.axis line, .axis path { stroke: var(--rule-strong); fill: none; }
+.axis text, text.axis {
+  fill: var(--ink-mute);
+  font-family: var(--sans);
+  font-size: 10px;
+}
+.gridline { stroke: var(--rule); stroke-width: 1; }
+.zeroline { stroke: var(--rule-strong); stroke-width: 1; }
+.serieslabel { font-family: var(--sans); font-size: 11px; font-weight: 600; }
+.annot { font-family: var(--sans); font-size: 10.5px; fill: var(--ink-mute); }
+
+/* On narrow screens the running title gives way to the section nav, which
+   scrolls horizontally rather than wrapping. */
+@media (max-width: 720px) {
+  .topbar-title span { display: none; }
+}
+@media (max-width: 600px) {
+  .topbar-title { display: none; }
+  .sectionnav { margin-left: -0.5rem; }
+}
+
+/* Labels sit directly on the charts rather than in a legend, so they are
+   given a halo of the page background to stay readable where they cross a
+   line or a shaded band. */
+.serieslabel, .annot, text.axis {
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
