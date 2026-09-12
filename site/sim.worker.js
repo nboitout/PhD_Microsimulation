@@ -19,7 +19,7 @@ self.onmessage = function (e) {
 
   if (d.type === 'init') {
     stop(id);
-    sims[id] = self.createSim(d.params, d.seed, d.window, d.daysPerTick);
+    sims[id] = self.createSim(d.params, d.seed, d.window, d.perFrame, d.mode);
     if (d.warm) sims[id].warm(d.warm);
     self.postMessage({ id: id, type: 'frame', data: sims[id].snapshot() });
     return;

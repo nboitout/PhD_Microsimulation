@@ -547,3 +547,77 @@ footer {
   stroke-width: 3px;
   stroke-linejoin: round;
 }
+
+/* --- The dashboard at the top of the page -------------------------------- */
+/* Four panels on one shared axis of simulated time, plus a readout strip.
+   No controls: this one runs on its own. */
+
+.dash {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1.5rem;
+  margin-top: 0.5rem;
+}
+.dash-wide, .dash > .hero-still { grid-column: 1 / -1; }
+
+.dash-panel { min-width: 0; }
+.dash-panel canvas { display: block; width: 100%; }
+
+.dash-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin: 0.7rem 0 0.25rem;
+}
+.dash-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.swatch.solid::before { border-top-width: 4px; }
+
+.dash-readout {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 2rem;
+  margin: 1rem 0 0;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+.dash-readout div { margin: 0; }
+.dash-readout dt {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.dash-readout dd {
+  margin: 0.1rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.hero-status {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--ink-mute);
+  margin: 0.9rem 0 0;
+}
+
+@media (max-width: 620px) {
+  .dash { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  .dash-legend { margin-left: 0; width: 100%; }
+}

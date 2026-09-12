@@ -61,10 +61,32 @@ object to a global. The page loads the second form so that it also works from a
 
 `engine/build-site.mjs` additionally generates `site/sim-core.js` from
 `engine/model.mjs` by stripping the module exports. That file is loaded both by
-the page and by the Web Worker, so the simulation a visitor watches in the hero
-and drives in the playground is running the same equations the published figures
-came from, differing only in population size and run length. Do not edit
-`site/sim-core.js`: edit the model and rebuild.
+the page and by the Web Worker, so the simulation a visitor watches in the
+dashboard and drives in the playground is running the same equations the
+published figures came from, differing only in population size and run length.
+Do not edit `site/sim-core.js`: edit the model and rebuild.
+
+## The live panels
+
+`site/sim-driver.js` drives the model for the two live panels, in two modes.
+
+**`daily`** feeds the playground. It advances whole simulated days and records
+each day's closing price, which is the chapter's own recording rule. Someone
+moving a slider wants to see weeks of consequence.
+
+**`tape`** feeds the dashboard at the top of the page. It advances about four
+hundredths of a day per frame and records *every* event as it happens, so the
+price line, the population band and the event raster all sit on one shared axis
+of simulated time and can be read against each other: the price steps only where
+the raster shows a price event, and both go quiet together. That is the point of
+the dashboard — the irregularity of trading time is the chapter's distinctive
+claim, and it is visible in the first second rather than only described in §2.2.5.
+
+The window is two simulated days on a desktop and about one on a phone, because
+a raster is only worth drawing while its gaps are still separable: at 320px a
+two-day window would pack nine hundred events into a solid band. Under
+`prefers-reduced-motion` the whole dashboard is replaced by the pre-rendered
+still in `site/assets/`.
 
 ## What was available, and what was not
 

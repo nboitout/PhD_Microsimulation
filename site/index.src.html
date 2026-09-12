@@ -62,19 +62,57 @@
     <p class="hero-claim lede">Four hundred traders watch each other, change their minds, and push a single price around. Nothing schedules them. Ten competing clocks decide what happens next and when — so the market trades in bursts, the way real ones do.</p>
 
     <figure class="hero-figure">
-      <div class="hero-canvas-box" id="hero-box">
-        <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="dash" id="hero-dash">
+        <div class="dash-panel dash-wide">
+          <p class="dash-label">the exchange rate, tick by tick
+            <span class="dash-legend">
+              <span class="swatch price"><b>price</b></span>
+              <span class="swatch fundamental dashed"><b>fundamental value</b></span>
+            </span>
+          </p>
+          <canvas id="hero-price" aria-hidden="true"></canvas>
+        </div>
+
+        <div class="dash-panel dash-wide">
+          <p class="dash-label">who is holding which strategy
+            <span class="dash-legend">
+              <span class="swatch optimist solid"><b>optimists</b></span>
+              <span class="swatch pessimist solid"><b>pessimists</b></span>
+              <span class="swatch fundamentalist solid"><b>fundamentalists</b></span>
+            </span>
+          </p>
+          <canvas id="hero-pop" aria-hidden="true"></canvas>
+        </div>
+
+        <div class="dash-panel">
+          <p class="dash-label">every event, as it happens</p>
+          <canvas id="hero-raster" aria-hidden="true"></canvas>
+        </div>
+
+        <div class="dash-panel">
+          <p class="dash-label">what the market maker sees</p>
+          <canvas id="hero-ed" aria-hidden="true"></canvas>
+        </div>
+
+        <dl class="dash-readout" id="hero-readout" aria-hidden="true">
+          <div><dt>simulated day</dt><dd data-k="day">—</dd></div>
+          <div><dt>events so far</dt><dd data-k="events">—</dd></div>
+          <div><dt>price</dt><dd data-k="price">—</dd></div>
+          <div><dt>from fair value</dt><dd data-k="gap">—</dd></div>
+          <div><dt>traders</dt><dd data-k="n">—</dd></div>
+        </dl>
       </div>
-      <p class="hero-legend">
-        <span class="swatch price"><b>market price</b></span>
-        <span class="swatch fundamental dashed"><b>fundamental value</b></span>
-        <span id="hero-status" style="margin-left:auto"></span>
-      </p>
+
+      <p class="hero-status" id="hero-status"></p>
+
       <figcaption>
-        The simulation running live in this page: a small market of two hundred
-        traders. The solid line is the price they are making between them; the
-        dashed line is what the currency is actually worth, which drifts on news
-        alone. Neither line is a recording — it is being computed as you watch.
+        The model running live in this page, at a reduced population of two
+        hundred traders. All four panels share one axis of simulated time, so
+        they can be read against each other: the raster is every event the
+        market has just had, the price line ticks only where the raster shows a
+        price event, and the imbalance at the bottom right is what decides which
+        way the next tick goes. Nothing here is a recording, and nothing here is
+        on a grid — the gaps between events are as the model made them.
         <span class="provenance">Live in-browser run of a 2026 re-implementation of the 2003 model, at a reduced population. Not a figure from the original paper.</span>
       </figcaption>
     </figure>

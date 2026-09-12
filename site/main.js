@@ -31,9 +31,14 @@
     try { localStorage.setItem('theme', next); } catch (e) {}
     paintToggle();
     if (window.Charts) window.Charts.redrawAll();
+    document.dispatchEvent(new Event('themechange'));
   });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
-    if (!root.getAttribute('data-theme')) { paintToggle(); if (window.Charts) window.Charts.redrawAll(); }
+    if (!root.getAttribute('data-theme')) {
+      paintToggle();
+      if (window.Charts) window.Charts.redrawAll();
+      document.dispatchEvent(new Event('themechange'));
+    }
   });
   paintToggle();
 
@@ -225,13 +230,13 @@
       usable = false;
     }
 
-    function init(id, params, seed, windowDays, daysPerTick, warm, onFrame) {
+    function init(id, params, seed, windowDays, perFrame, warm, onFrame, mode) {
       handlers[id] = onFrame;
       if (usable && worker) {
-        worker.postMessage({ id, type: 'init', params, seed, window: windowDays, daysPerTick, warm });
+        worker.postMessage({ id, type: 'init', params, seed, window: windowDays, perFrame, warm, mode });
       } else {
         if (inline[id] && inline[id].timer) clearInterval(inline[id].timer);
-        const sim = window.createSim(params, seed, windowDays, daysPerTick);
+        const sim = window.createSim(params, seed, windowDays, perFrame, mode);
         if (warm) sim.warm(warm);
         inline[id] = { sim, timer: null };
         onFrame(sim.snapshot());
@@ -347,11 +352,49 @@
     ctx.globalAlpha = 1;
   }
 
-  // --- hero ---------------------------------------------------------------
+  // --- hero dashboard -----------------------------------------------------
+  //
+  // Four panels sharing one axis of simulated time, fed by the tape mode of the
+  // driver: every event the market has, in order, with the time it happened.
+  // The point of putting them on one axis is that they can be read against each
+  // other — the price ticks where the raster is dense, and goes quiet where it
+  // is sparse. No controls; it simply runs.
 
-  const heroBox = document.getElementById('hero-box');
-  const heroCanvas = document.getElementById('hero-canvas');
+  const heroDash = document.getElementById('hero-dash');
   const heroStatus = document.getElementById('hero-status');
+  const heroReadout = document.getElementById('hero-readout');
+  const heroCanvases = {
+    price: document.getElementById('hero-price'),
+    pop: document.getElementById('hero-pop'),
+    raster: document.getElementById('hero-raster'),
+    ed: document.getElementById('hero-ed'),
+  };
+
+  // Which of the ten events each raster row is, and the colour it takes. A
+  // switch is coloured by the strategy the trader moves to, so the raster uses
+  // the same palette as the population band directly above it.
+  const EVENT_ROWS = [
+    { sym: 'β₁', key: '--optimist' },
+    { sym: 'β₂', key: '--pessimist' },
+    { sym: 'β₃', key: '--optimist' },
+    { sym: 'β₄', key: '--fundamentalist' },
+    { sym: 'β₅', key: '--pessimist' },
+    { sym: 'β₆', key: '--fundamentalist' },
+    { sym: 'β₇', key: '--price' },
+    { sym: 'β₈', key: '--price' },
+    { sym: 'β₉', key: '--fundamental' },
+    { sym: 'β₁₀', key: '--fundamental' },
+  ];
+
+  const RASTER_GUTTER = 34;
+
+  // A phone gets shorter panels and, more importantly, a shorter window: the
+  // raster is only worth drawing while its marks are still separable, and at
+  // 320px a two-day window would pack nine hundred events into a solid band.
+  const narrowDash = () => window.innerWidth < 620;
+  const DASH_H = () => (narrowDash()
+    ? { price: 124, pop: 34, raster: 112, ed: 112 }
+    : { price: 150, pop: 42, raster: 132, ed: 132 });
 
   function heroStill() {
     const img = document.createElement('img');
@@ -359,9 +402,242 @@
     img.className = 'hero-still';
     img.alt = 'A still frame of the simulation: the market price, a solid line, ' +
       'wandering around a slower-moving dashed line for the fundamental value.';
-    heroBox.replaceChildren(img);
-    heroBox.style.height = 'auto';
-    if (heroStatus) heroStatus.textContent = 'still frame — motion is switched off';
+    heroDash.replaceChildren(img);
+    if (heroStatus) {
+      heroStatus.textContent = 'Motion is switched off, so the dashboard is ' +
+        'shown as a still frame. The rest of the page is unaffected.';
+    }
+  }
+
+  function fitCanvas(canvas, height) {
+    const W = Math.max(220, Math.round(canvas.parentNode.clientWidth || 600));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (canvas.width !== W * dpr || canvas.height !== height * dpr) {
+      canvas.width = W * dpr;
+      canvas.height = height * dpr;
+      canvas.style.height = height + 'px';
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, height);
+    return { ctx, W, H: height };
+  }
+
+  // The shared mapping from simulated time to x. Every panel uses it, and the
+  // raster's gutter is reserved on all of them so the axes line up exactly.
+  function timeScale(snap, W, gutter) {
+    const span = Math.max(1e-6, snap.t - snap.t0);
+    const left = gutter, right = W - 4;
+    return (t) => left + ((t - snap.t0) / span) * (right - left);
+  }
+
+  function drawHeroPrice(snap) {
+    const { ctx, W, H } = fitCanvas(heroCanvases.price, DASH_H().price);
+    if (snap.price.length < 2) return;
+    const X = timeScale(snap, W, RASTER_GUTTER);
+
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < snap.price.length; i++) {
+      lo = Math.min(lo, snap.price[i], snap.fund[i]);
+      hi = Math.max(hi, snap.price[i], snap.fund[i]);
+    }
+    const pad = Math.max(0.25, (hi - lo) * 0.18);
+    lo -= pad; hi += pad;
+    const Y = (v) => 12 + (1 - (v - lo) / (hi - lo)) * (H - 24);
+
+    ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = Charts.cssVar('--ink-mute');
+    ctx.strokeStyle = Charts.cssVar('--rule');
+    ctx.lineWidth = 1;
+    ctx.textAlign = 'right';
+    for (const v of Charts.niceTicks(lo, hi, 3)) {
+      ctx.beginPath();
+      ctx.moveTo(RASTER_GUTTER, Y(v) + 0.5);
+      ctx.lineTo(W - 4, Y(v) + 0.5);
+      ctx.stroke();
+      ctx.fillText(v.toFixed(1), RASTER_GUTTER - 5, Y(v) + 3.5);
+    }
+
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = Charts.cssVar('--fundamental');
+    ctx.beginPath();
+    for (let i = 0; i < snap.fund.length; i++) {
+      const x = X(snap.time[i]), y = Y(snap.fund[i]);
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+
+    // The price is a step, not a line: it holds its quote until a price event
+    // moves it by one tick. Drawing it as a slope would invent movement the
+    // model never made.
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = Charts.cssVar('--price');
+    ctx.beginPath();
+    ctx.moveTo(X(snap.time[0]), Y(snap.price[0]));
+    for (let i = 1; i < snap.price.length; i++) {
+      const x = X(snap.time[i]);
+      ctx.lineTo(x, Y(snap.price[i - 1]));
+      ctx.lineTo(x, Y(snap.price[i]));
+    }
+    ctx.stroke();
+
+    const lastX = X(snap.time[snap.time.length - 1]);
+    const lastY = Y(snap.price[snap.price.length - 1]);
+    ctx.fillStyle = Charts.cssVar('--price');
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawHeroPopulation(snap) {
+    const { ctx, W, H } = fitCanvas(heroCanvases.pop, DASH_H().pop);
+    if (snap.opt.length < 2) return;
+    const X = timeScale(snap, W, RASTER_GUTTER);
+    const total = snap.n;
+
+    const series = [
+      { get: (i) => snap.opt[i], colour: Charts.cssVar('--optimist') },
+      { get: (i) => snap.pess[i], colour: Charts.cssVar('--pessimist') },
+      { get: (i) => total - snap.opt[i] - snap.pess[i], colour: Charts.cssVar('--fundamentalist') },
+    ];
+    const base = new Array(snap.opt.length).fill(0);
+    ctx.globalAlpha = 0.8;
+    for (const band of series) {
+      ctx.fillStyle = band.colour;
+      ctx.beginPath();
+      for (let i = 0; i < base.length; i++) ctx.lineTo(X(snap.time[i]), H - (base[i] / total) * H);
+      for (let i = base.length - 1; i >= 0; i--) {
+        base[i] += band.get(i);
+        ctx.lineTo(X(snap.time[i]), H - (base[i] / total) * H);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHeroRaster(snap) {
+    const { ctx, W, H } = fitCanvas(heroCanvases.raster, DASH_H().raster);
+    const X = timeScale(snap, W, RASTER_GUTTER);
+    const rowH = (H - 10) / 10;
+
+    ctx.font = '9px ui-monospace, Menlo, Consolas, monospace';
+    ctx.textAlign = 'left';
+    for (let r = 0; r < 10; r++) {
+      const y = 5 + r * rowH;
+      ctx.strokeStyle = Charts.cssVar('--rule');
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(RASTER_GUTTER, Math.round(y + rowH / 2) + 0.5);
+      ctx.lineTo(W - 4, Math.round(y + rowH / 2) + 0.5);
+      ctx.stroke();
+      ctx.fillStyle = Charts.cssVar('--ink-mute');
+      ctx.fillText(EVENT_ROWS[r].sym, 0, y + rowH / 2 + 3);
+    }
+
+    // events arrives flat: [t, type, t, type, …]
+    const ev = snap.events;
+    const newest = ev.length ? ev[ev.length - 2] : 0;
+    for (let i = 0; i < ev.length; i += 2) {
+      const t = ev[i], type = ev[i + 1];
+      if (type < 0 || type > 9) continue;
+      const y = 5 + type * rowH;
+      // The most recent events are drawn at full strength and older ones fade,
+      // so the eye is pulled to what is happening now.
+      const age = (newest - t) / Math.max(1e-6, snap.t - snap.t0);
+      ctx.globalAlpha = 0.4 + 0.6 * Math.max(0, 1 - age);
+      ctx.fillStyle = Charts.cssVar(EVENT_ROWS[type].key);
+      ctx.fillRect(X(t) - 1, y + rowH * 0.18, 2, rowH * 0.64);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHeroED(snap) {
+    const { ctx, W, H } = fitCanvas(heroCanvases.ed, DASH_H().ed);
+    const ed = snap.ed;
+    const rows = [
+      { label: 'chartists', v: ed.chart, colour: ed.chart >= 0 ? '--optimist' : '--pessimist' },
+      { label: 'fundamentalists', v: ed.fund, colour: '--fundamentalist' },
+      { label: 'excess demand', v: ed.total, colour: '--price' },
+    ];
+
+    // One line per row: label, bar, value. The two components sit above the sum
+    // they make, all on the same scale, so the tug-of-war between them is the
+    // shape of the panel.
+    const LW = Math.min(104, Math.max(72, W * 0.3));
+    const VW = 46;
+    const span = W - LW - VW;
+    const zero = LW + span / 2;
+    const mag = Math.max(0.4, Math.abs(ed.chart), Math.abs(ed.fund), Math.abs(ed.total));
+    const scale = (span / 2 - 2) / mag;
+
+    const rowGap = (H - 34) / 3;
+    const barH = Math.min(14, rowGap - 7);
+
+    ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+    ctx.strokeStyle = Charts.cssVar('--rule-strong');
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(zero) + 0.5, 10);
+    ctx.lineTo(Math.round(zero) + 0.5, 16 + 2 * rowGap + barH + 4);
+    ctx.stroke();
+
+    rows.forEach(function (row, i) {
+      const y = 16 + i * rowGap;
+      const h = i === 2 ? barH + 2 : barH;
+      const len = row.v * scale;
+      const mid = y + h / 2 + 3.5;
+
+      ctx.fillStyle = i === 2 ? Charts.cssVar('--ink-soft') : Charts.cssVar('--ink-mute');
+      ctx.textAlign = 'left';
+      ctx.fillText(row.label, 0, mid);
+
+      ctx.fillStyle = Charts.cssVar(row.colour);
+      ctx.globalAlpha = i === 2 ? 1 : 0.6;
+      ctx.fillRect(len >= 0 ? zero : zero + len, y, Math.max(1.5, Math.abs(len)), h);
+      ctx.globalAlpha = 1;
+
+      // Values live in their own right-hand column rather than chasing the end
+      // of the bar: a long negative bar would otherwise put its number on top
+      // of the label.
+      ctx.fillStyle = i === 2 ? Charts.cssVar('--ink') : Charts.cssVar('--ink-mute');
+      ctx.textAlign = 'right';
+      ctx.fillText((row.v >= 0 ? '+' : '') + row.v.toFixed(2), W, mid);
+    });
+
+    ctx.fillStyle = Charts.cssVar('--ink-mute');
+    ctx.textAlign = 'left';
+    ctx.fillText(ed.total >= 0 ? 'the next tick goes up' : 'the next tick goes down', 0, H - 5);
+  }
+
+  function paintReadout(snap) {
+    if (!heroReadout) return;
+    const gap = 100 * (snap.price.length
+      ? (snap.price[snap.price.length - 1] - snap.fund[snap.fund.length - 1]) /
+        snap.fund[snap.fund.length - 1]
+      : 0);
+    const values = {
+      day: snap.day.toLocaleString('en'),
+      events: snap.eventCount.toLocaleString('en'),
+      price: snap.price.length ? snap.price[snap.price.length - 1].toFixed(1) : '—',
+      gap: (gap >= 0 ? '+' : '') + gap.toFixed(2) + '%',
+      n: String(snap.n),
+    };
+    heroReadout.querySelectorAll('dd').forEach(function (dd) {
+      const v = values[dd.getAttribute('data-k')];
+      if (v !== undefined && dd.textContent !== v) dd.textContent = v;
+    });
+  }
+
+  function drawHero(snap) {
+    if (!snap || snap.mode !== 'tape') return;
+    drawHeroPrice(snap);
+    drawHeroPopulation(snap);
+    drawHeroRaster(snap);
+    drawHeroED(snap);
+    paintReadout(snap);
   }
 
   if (reduceMotion.matches) {
@@ -371,21 +647,28 @@
     let heroFrames = 0;
     const heroStart = performance.now();
 
-    Runner.init('hero', { N: 200 }, 8675309, 130, 0.5, 30, function (snap) {
+    // A window of two simulated days, advanced by four hundredths of a day each
+    // frame — about fifteen events. Short enough that the raster's gaps are
+    // legible rather than crushed against the right-hand edge, long enough that
+    // the price line has a shape, and plainly moving within a second.
+    const heroWindow = narrowDash() ? 0.9 : 2;
+    Runner.init('hero', { N: 200 }, 8675309, heroWindow, 0.04, heroWindow * 1.1, function (snap) {
       heroSnap = snap;
       heroFrames++;
-      drawPricePanel(heroCanvas, snap, heroBox.clientHeight || 200, false);
+      drawHero(snap);
       // A device that cannot keep up gets the still instead.
       if (heroFrames === 40 && performance.now() - heroStart > 9000) {
         Runner.pause('hero');
         heroStill();
       }
       if (snap.stalled) Runner.pause('hero');
-    });
+    }, 'tape');
     Runner.run('hero', 55);
 
     if (heroStatus) {
-      heroStatus.textContent = Runner.threaded ? 'running live' : 'running live (on this page)';
+      heroStatus.textContent = Runner.threaded
+        ? 'Running live, in a background thread, so it never interrupts your scrolling.'
+        : 'Running live in this page.';
     }
 
     // Do not burn cycles on a panel nobody can see.
@@ -394,11 +677,10 @@
         for (const e of entries) {
           if (e.isIntersecting) Runner.run('hero', 55); else Runner.pause('hero');
         }
-      }, { threshold: 0 }).observe(heroBox);
+      }, { threshold: 0 }).observe(heroDash);
     }
-    window.addEventListener('resize', function () {
-      if (heroSnap) drawPricePanel(heroCanvas, heroSnap, heroBox.clientHeight || 200, false);
-    });
+    window.addEventListener('resize', function () { if (heroSnap) drawHero(heroSnap); });
+    document.addEventListener('themechange', function () { if (heroSnap) drawHero(heroSnap); });
   }
 
   // --- playground ---------------------------------------------------------
