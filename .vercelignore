@@ -1,0 +1,14 @@
+# Not needed to build the site, and the scan of the original page is by far the
+# largest file in the repository. Excluding these cuts the upload from about
+# 1.6 MB to a couple of hundred kilobytes.
+
+# The translated chapter and the scan of Figure 2.1: provenance, not input.
+source/
+
+# The archival JSON. engine/generate.mjs writes this directory, and creates it
+# if it is absent; the page itself loads site/data/*.js, which the same script
+# writes. Nothing in the build reads data/.
+data/
+
+# Development-time only.
+.claude/
