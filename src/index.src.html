@@ -28,20 +28,35 @@
 <header class="topbar">
   <div class="topbar-inner">
     <p class="topbar-title">Agent-Based Market Simulation <span>· 2003</span></p>
-    <nav class="sectionnav" aria-label="Sections">
+
+    <nav class="sectionnav" id="sectionnav" aria-label="Sections">
       <a href="#problem">The problem</a>
-      <a href="#traders">Traders</a>
-      <a href="#time">Time</a>
-      <a href="#price">Price</a>
+      <a href="#traders">The traders</a>
+      <a href="#time">Trading time</a>
+      <a href="#price">Making a price</a>
       <a href="#events">Ten events</a>
-      <a href="#produces">Results</a>
+      <a href="#produces">What comes out</a>
       <a href="#calibration">Calibration</a>
-      <a href="#ledger">Ledger</a>
+      <a href="#ledger">Honest ledger</a>
       <a href="#playground">Try it</a>
       <a href="#provenance">Provenance</a>
     </nav>
-    <button class="themetoggle" id="theme-toggle" type="button" aria-live="polite">Dark</button>
+
+    <button class="themetoggle" id="theme-toggle" type="button"
+            aria-label="Dark theme" aria-pressed="false" title="Switch theme">
+      <svg class="icon-sun" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+        <circle cx="10" cy="10" r="3.6"/>
+        <path d="M10 1.5v2.3M10 16.2v2.3M18.5 10h-2.3M3.8 10H1.5M16 4l-1.6 1.6M5.6 14.4L4 16M16 16l-1.6-1.6M5.6 5.6L4 4"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+        <path d="M16.8 12.6A7.2 7.2 0 0 1 7.4 3.2a7.5 7.5 0 1 0 9.4 9.4Z"/>
+      </svg>
+    </button>
   </div>
+
+  <!-- How far through the document you are. A twenty-thousand-pixel page
+       without one leaves you with no idea how much is left. -->
+  <div class="topbar-progress" aria-hidden="true"><span id="read-progress"></span></div>
 </header>
 
 <main id="main">

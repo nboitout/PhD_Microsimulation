@@ -19,10 +19,18 @@
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
+  const iconSun = toggle.querySelector('.icon-sun');
+  const iconMoon = toggle.querySelector('.icon-moon');
+
   function paintToggle() {
-    const next = currentTheme() === 'dark' ? 'light' : 'dark';
-    toggle.textContent = next === 'dark' ? 'Dark' : 'Light';
-    toggle.setAttribute('aria-label', 'Switch to the ' + next + ' theme');
+    const dark = currentTheme() === 'dark';
+    // A toggle button, so the label names the thing being toggled and
+    // aria-pressed carries the state; the title says what a click will do.
+    toggle.setAttribute('aria-pressed', String(dark));
+    toggle.setAttribute('title', 'Switch to the ' + (dark ? 'light' : 'dark') + ' theme');
+    // Show the destination: a sun while dark, a moon while light.
+    if (iconSun) iconSun.hidden = !dark;
+    if (iconMoon) iconMoon.hidden = dark;
   }
 
   toggle.addEventListener('click', function () {
@@ -62,6 +70,52 @@
       });
     }, { rootMargin: '-20% 0px -55% 0px', threshold: [0, 0.25, 0.5, 1] });
     sections.forEach((s) => io.observe(s));
+  }
+
+  // =======================================================================
+  // The running head: reading progress, and the nav's scroll affordance
+  // =======================================================================
+
+  // The bar is updated straight from a passive scroll listener. scrollTop is
+  // already current when the event fires, so reading it forces no layout, and
+  // the write is one custom property feeding a transform. Throttling this to an
+  // animation frame would be the usual reflex, but it makes the bar depend on
+  // frames arriving — and if one never does, the request latches and the bar
+  // stops for the rest of the visit.
+  {
+    const bar = document.getElementById('read-progress');
+    let last = -1;
+    const paintProgress = function () {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - doc.clientHeight;
+      const ratio = scrollable > 0
+        ? Math.min(1, Math.max(0, doc.scrollTop / scrollable))
+        : 0;
+      // Two decimal places is a quarter of a pixel on a wide screen, and it
+      // keeps most scroll events from touching the DOM at all.
+      const next = Math.round(ratio * 400) / 400;
+      if (next === last) return;
+      last = next;
+      if (bar) bar.style.setProperty('--read', String(next));
+    };
+    window.addEventListener('scroll', paintProgress, { passive: true });
+    window.addEventListener('resize', paintProgress);
+    paintProgress();
+  }
+
+  // The nav scrolls sideways when it does not fit. Fade its trailing edge only
+  // when there is in fact something past it to scroll to.
+  const nav = document.getElementById('sectionnav');
+  if (nav) {
+    const markScrollable = function () {
+      nav.classList.toggle('is-scrollable', nav.scrollWidth - nav.clientWidth > 4);
+    };
+    markScrollable();
+    window.addEventListener('resize', markScrollable);
+    // The labels change width when the fonts land and when layout settles, and
+    // the first measurement happens before either, so measure again at both.
+    window.addEventListener('load', markScrollable);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollable);
   }
 
   // =======================================================================
