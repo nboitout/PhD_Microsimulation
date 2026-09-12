@@ -13,8 +13,10 @@ written in 2026 from the chapter's own equations, and says so.
 engine/model.mjs        the model — the only place the equations live
 engine/generate.mjs     build step: runs the model, writes data/*.json
 engine/build-site.mjs   build step: renders the maths, vendors KaTeX, builds the page
+src/index.src.html      the page's source, before the mathematics is rendered
 data/                   the generated series (archival JSON)
-site/                   the deployable site
+site/                   the deployable site — output only
+vercel.ts               hosting configuration
 source/                 the translated chapter and the original Figure 2.1
 ```
 
@@ -232,26 +234,61 @@ override.
 
 ## Deployment
 
-Pushing to `main` triggers `.github/workflows/pages.yml`, which installs
-dependencies, runs `npm run build`, drops the development contact sheet and
-publishes `site/` to GitHub Pages:
+Hosted on Vercel, at
 
-> https://nboitout.github.io/PhD_Microsimulation/
+> https://phd-microsimulation.vercel.app
 
-The workflow rebuilds rather than trusting the committed output. That is
-meaningful because `engine/generate.mjs` is deterministic: at its fixed seed,
-two runs produce byte-identical `data/*.json` apart from the build date. If the
-committed data or page ever drift from what the engine and `index.src.html`
-produce, the rebuild is what gets published, and `npm run build` locally brings
-the committed copies back into line.
+The repository is connected to the Vercel project, so a push to `main` builds
+and deploys. `vercel.ts` is the whole configuration: no framework preset,
+`npm run build` as the build command, `site` as the output directory, plus
+cache-control and security headers.
 
-Every path the page loads is relative, so the site works at a project subpath,
-at a domain root, and from the filesystem alike. The only absolute URLs are the
-two Open Graph tags, which social-card scrapers will not resolve otherwise; if
-the site moves, those two lines in `site/index.src.html` are what need changing.
+To deploy by hand instead:
 
-## Not part of the published site
+```bash
+vercel pull --yes --environment=production
+vercel build --prod
+vercel deploy --prebuilt --prod
+```
 
-`site/_figures-preview.html` renders one figure at a time for development
-(`?f=price,returns,dist,acf,scatter,strategies,clock,biztime,tick`). The Pages
-workflow deletes it before publishing.
+There is no server, no function and no database — Vercel runs the build and
+then serves `site/` as files.
+
+### The one absolute URL
+
+Social-card scrapers will not resolve a relative `og:image`, so those two tags
+have to name the deployment. Everything else the page loads is relative, which
+is why it works from a subpath and from the filesystem alike. The origin is
+resolved at build time by `engine/build-site.mjs`, in this order:
+
+| | |
+|---|---|
+| `SITE_ORIGIN` | set it yourself, for any host. Set on the Vercel project. |
+| `VERCEL_PROJECT_PRODUCTION_URL` | supplied by Vercel at build time |
+| neither | the two tags are left out, and the build says so |
+
+So the page can move host without editing any source: set `SITE_ORIGIN` and
+rebuild. Nothing else in the site knows where it lives.
+
+### Headers
+
+`vercel.ts` sets a Content-Security-Policy that says what the page already
+does: `default-src 'self'` with no host allowed anywhere except the site's own
+origin, so the claim that it makes no third-party request is enforced rather
+than merely intended. `'unsafe-inline'` is needed twice — for the small inline
+script that applies the theme before first paint, and for the inline `style`
+attributes — and for nothing else. The KaTeX faces are cached for a year, being
+stable for the life of a KaTeX release; the generated data is revalidated every
+five minutes, since it is rewritten by every build and must not be served stale
+beside a page expecting new fields.
+
+## Not part of the published site## Not part of the published site
+
+`site/` is output: it is what gets served, so nothing that is not part of the
+site lives there. The page's source is `src/index.src.html`, which
+`engine/build-site.mjs` renders into `site/index.html`.
+
+A development contact sheet that renders one figure at a time —
+`?f=price,returns,dist,acf,scatter,strategies,clock,biztime,tick` — was useful
+while building the charts and is in the history at
+`site/_figures-preview.html`, should it be wanted again. It is not deployed.

@@ -13,5 +13,8 @@
   "dependencies": {
     "katex": "^0.18.7"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@vercel/config": "^0.7.0"
+  }
 }

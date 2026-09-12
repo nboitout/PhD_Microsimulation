@@ -1,4 +1,4 @@
-// build-site.mjs — turns site/index.src.html into the deployable site/index.html.
+// build-site.mjs — turns src/index.src.html into the deployable site/index.html.
 //
 //   node engine/build-site.mjs
 //
@@ -10,6 +10,9 @@
 //   3. Emit site/sim-core.js from engine/model.mjs, so that the browser runs
 //      exactly the equations the published figures were generated from and
 //      there is only ever one copy of the model.
+//
+// site/ is output. Nothing that is not part of the deployed site belongs in it,
+// which is why the page's source lives in src/.
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -82,8 +85,33 @@ global.SimCore = {
 // ---------------------------------------------------------------------------
 
 {
-  let html = readFileSync(join(SITE, 'index.src.html'), 'utf8');
+  let html = readFileSync(join(ROOT, 'src', 'index.src.html'), 'utf8');
   let count = 0;
+
+  // Social-card scrapers will not resolve a relative og:image, so those two
+  // tags have to name the deployment. Everything else the page loads is
+  // relative, which is why it works from a subpath and from disk alike; these
+  // are the only absolute URLs, and they are resolved here rather than being
+  // written into the source.
+  //
+  //   SITE_ORIGIN                      set it yourself, for any host
+  //   VERCEL_PROJECT_PRODUCTION_URL    supplied by Vercel at build time
+  //   neither                          the tags are simply left out
+  const origin = (process.env.SITE_ORIGIN
+    || (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL
+      : '')).replace(/\/+$/, '');
+
+  const social = origin
+    ? [
+      `<meta property="og:url" content="${origin}/">`,
+      `<meta property="og:image" content="${origin}/assets/og.png">`,
+      '<meta property="og:image:alt" content="The simulated exchange rate over 2,500 days, wandering around its fundamental value.">',
+    ].join('\n')
+    : '<!-- no SITE_ORIGIN at build time, so no absolute social-card URLs -->';
+
+  html = html.replace('<!--SOCIAL-->', social);
+  console.log(origin ? `origin       ${origin}` : 'origin       not set — social tags omitted');
 
   const render = (tex, display) => {
     count++;

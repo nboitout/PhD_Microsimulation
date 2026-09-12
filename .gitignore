@@ -1,6 +1,10 @@
 # Dependencies — restored with `npm ci` from package-lock.json
 node_modules/
 
+# Vercel CLI: the local project link, pulled settings and build output
+.vercel
+.env*
+
 # Office lock files, which OneDrive leaves behind
 ~$*
 
