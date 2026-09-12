@@ -179,7 +179,13 @@ a:hover { text-decoration-color: currentColor; }
   :root { --page: 88rem; }
 }
 
-main > section { padding-block: clamp(3rem, 7vw, 5.5rem); border-top: 1px solid var(--rule); }
+main > section {
+  padding-block: clamp(3rem, 7vw, 5.5rem);
+  border-top: 1px solid var(--rule);
+  /* The running head is sticky, so an anchor jump would otherwise land with
+     the section's own heading hidden underneath it. */
+  scroll-margin-top: 4.5rem;
+}
 main > section:first-of-type { border-top: 0; }
 
 h1, h2, h3 { font-weight: 600; line-height: 1.2; letter-spacing: -0.012em; }
@@ -734,4 +740,39 @@ footer {
   .wrap > .biblio { max-width: 52rem; }
   .biblio ul { columns: 2; column-gap: 3rem; }
   .biblio li { break-inside: avoid; }
+}
+
+/* The one call to action in the hero. The dashboard beside it deliberately has
+   no controls, so this says where the controls are — set as a link rather than
+   a button, which would be the wrong register for the page. */
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.8rem;
+  margin: 0 0 1.2rem;
+}
+.herolink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--price);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--price) 32%, transparent);
+}
+.herolink:hover { border-bottom-color: var(--price); }
+/* The underline should sit tight under the words, but the thing you can hit
+   should be bigger than the words, so the hit area is extended separately. */
+.herolink { position: relative; }
+.herolink::after { content: ""; position: absolute; inset: -9px -6px; }
+.herolink-arrow { transition: transform 0.15s ease; }
+.herolink:hover .herolink-arrow { transform: translateY(2px); }
+.hero-cta-note {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  color: var(--ink-mute);
 }
