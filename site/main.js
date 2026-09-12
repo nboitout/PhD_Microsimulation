@@ -391,7 +391,8 @@
   // Panel heights follow the space the dashboard actually has. Beside the
   // copy on a laptop it is shorter, so that the whole hero clears the fold;
   // stacked under the copy it can afford to be taller.
-  const TWO_COLUMN = () => window.matchMedia('(min-width: 900px)').matches;
+  // Must match the two-column breakpoint in styles.css.
+  const TWO_COLUMN = () => window.matchMedia('(min-width: 1120px)').matches;
   const SHORT = () => window.matchMedia('(max-height: 800px)').matches;
   const narrowDash = () => window.innerWidth < 620;
   const DASH_H = () => (TWO_COLUMN()

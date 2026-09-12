@@ -55,8 +55,8 @@
 <!-- 1. Hero                                                               -->
 <!-- ===================================================================== -->
 <section class="hero" aria-labelledby="title">
-  <div class="wrap-wide hero-grid">
-    <div class="hero-copy">
+  <div class="layout layout--center hero-grid">
+    <div class="col-text hero-copy">
       <p class="eyebrow">Doctoral dissertation · Chapter 2 · 2003</p>
       <h1 id="title">A market made of people who disagree</h1>
       <p class="byline"><b>Nicolas Boitout</b> and <b>Thierry Delahaut</b> — an agent-based microsimulation of the foreign-exchange market</p>
@@ -64,7 +64,7 @@
       <p class="hero-what">Chapter 2 of a doctoral dissertation defended in 2003, presented as it was, with the model re-implemented so its figures can be regenerated.</p>
     </div>
 
-    <figure class="hero-figure">
+    <figure class="col-fig hero-figure">
       <div class="dash" id="hero-dash">
         <div class="dash-panel dash-wide">
           <p class="dash-label">the exchange rate, tick by tick
@@ -150,7 +150,8 @@
 <!-- 3. Meet the traders                                                   -->
 <!-- ===================================================================== -->
 <section id="traders" aria-labelledby="traders-h">
-  <div class="wrap">
+  <div class="layout">
+    <div class="col-text">
     <p class="eyebrow">The population</p>
     <h2 id="traders-h">Three ways to be wrong</h2>
 
@@ -172,9 +173,9 @@
     [1998] all document that chartist and fundamentalist methods are both widely
     used, and — the part that matters for this model — that their relative
     weights shift over time.</p>
-  </div>
+    </div>
 
-  <div class="wrap-wide">
+    <div class="col-fig">
     <figure>
       <div class="figscroll" id="strategy-diagram"></div>
       <figcaption>
@@ -184,6 +185,7 @@
         keyboard, to see what drives it.
       </figcaption>
     </figure>
+    </div>
   </div>
 
   <div class="wrap">
@@ -280,7 +282,8 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
 <!-- 4. Time is not a grid                                                 -->
 <!-- ===================================================================== -->
 <section id="time" aria-labelledby="time-h">
-  <div class="wrap">
+  <div class="layout">
+    <div class="col-text">
     <p class="eyebrow">The distinctive contribution</p>
     <h2 id="time-h">Time is not a grid</h2>
 
@@ -308,9 +311,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
     calm, nothing happens for a long while. Trading time comes out irregular and
     bursty without anyone having imposed it. It is a property of the mechanism,
     not a setting.</p>
-  </div>
+    </div>
 
-  <div class="wrap-wide">
+    <div class="col-fig">
     <figure class="clockrace">
       <div class="figscroll" id="clock-race"></div>
       <div class="buttonrow">
@@ -326,9 +329,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
         <span class="provenance">Rates taken from a 2026 re-implementation of the 2003 model, settled after forty simulated days; each draw is made live in this page. Not a figure from the original paper.</span>
       </figcaption>
     </figure>
-  </div>
+    </div>
 
-  <div class="wrap-wide">
+    <div class="col-full">
     <figure>
       <div class="figscroll" id="business-time"></div>
       <figcaption>
@@ -343,6 +346,7 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
         <span class="provenance">The right-hand panel was produced by a 2026 re-implementation of the 2003 model. The left-hand panel is built from the event times of the chapter's Figure 2.1; the chapter's own Figure 2.2 was not among the pages available for this presentation, and is not reproduced here.</span>
       </figcaption>
     </figure>
+    </div>
   </div>
 
   <div class="wrap">
@@ -392,7 +396,8 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
 <!-- 5. How the price moves                                                -->
 <!-- ===================================================================== -->
 <section id="price" aria-labelledby="price-h">
-  <div class="wrap">
+  <div class="layout">
+    <div class="col-text">
     <p class="eyebrow">Price formation</p>
     <h2 id="price-h">One market maker, one tick at a time</h2>
 
@@ -416,9 +421,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
     the price-revision event wins the clock race, the quote moves by exactly one
     tick, in the direction of the imbalance. Nothing moves the price by more than
     a tick at a time. Large moves are many ticks arriving quickly.</p>
-  </div>
+    </div>
 
-  <div class="wrap-wide">
+    <div class="col-fig">
     <figure>
       <div class="figscroll" id="tick-figure"></div>
       <div class="buttonrow">
@@ -431,6 +436,7 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
         to see the two panels move against each other.
       </figcaption>
     </figure>
+    </div>
   </div>
 
   <div class="wrap">
@@ -585,11 +591,11 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
     re-implementation and is labelled as such.</p>
   </div>
 
-  <div class="wrap-wide">
+  <div class="gallery">
 
-    <figure>
-      <div class="figscroll" id="fig-price"></div>
-      <figcaption>
+    <figure class="layout layout--center">
+      <div class="figscroll col-fig" id="fig-price"></div>
+      <figcaption class="col-text">
         <span class="fact">Fact 3 · volatility clustering</span>
         The price and the fundamental value over the whole run. The fundamental,
         drawn on top because the price would otherwise bury it, moves only on
@@ -601,9 +607,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
       </figcaption>
     </figure>
 
-    <figure>
-      <div class="figscroll"><canvas id="fig-returns" height="230"></canvas></div>
-      <figcaption>
+    <figure class="layout layout--center">
+      <div class="figscroll col-fig"><canvas id="fig-returns" height="230"></canvas></div>
+      <figcaption class="col-text">
         <span class="fact">Fact 3 · volatility clustering</span>
         Daily returns, one spike per day. Clustering is what this picture is
         for: the tall spikes keep company with other tall spikes, and the calm
@@ -613,9 +619,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
       </figcaption>
     </figure>
 
-    <figure>
-      <div class="figscroll" id="fig-dist"></div>
-      <figcaption>
+    <figure class="layout layout--center">
+      <div class="figscroll col-fig" id="fig-dist"></div>
+      <figcaption class="col-text">
         <span class="fact">Fact 2 · fat tails</span>
         The distribution of daily returns against the normal curve, on a
         logarithmic vertical axis so the tails are visible at all. Near the
@@ -626,9 +632,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
       </figcaption>
     </figure>
 
-    <figure>
-      <div class="figscroll" id="fig-acf"></div>
-      <figcaption>
+    <figure class="layout layout--center">
+      <div class="figscroll col-fig" id="fig-acf"></div>
+      <figcaption class="col-text">
         <span class="fact">Facts 4 and 5 · long memory, volatility and volume together</span>
         Slow decay. Each point shows how much today's turbulence still tells you
         about turbulence some number of days later. In a market with no memory
@@ -641,9 +647,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
       </figcaption>
     </figure>
 
-    <figure>
-      <div class="figscroll" id="fig-scatter"></div>
-      <figcaption>
+    <figure class="layout layout--center">
+      <div class="figscroll col-fig" id="fig-scatter"></div>
+      <figcaption class="col-text">
         <span class="fact">Fact 5 · volatility against volume</span>
         Each dot is one simulated day: the gross quantity that changed hands
         against how far the price travelled. Busy days are volatile days. Nothing
@@ -691,7 +697,8 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
 <!-- 8. Calibration                                                        -->
 <!-- ===================================================================== -->
 <section id="calibration" aria-labelledby="calibration-h">
-  <div class="wrap">
+  <div class="layout">
+    <div class="col-text">
     <p class="eyebrow">Calibration</p>
     <h2 id="calibration-h">Thirteen numbers, found by hand</h2>
 
@@ -708,7 +715,9 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
     long-memory parameter of volatility estimated with Robinson's [1994]
     semiparametric estimator, against a benchmark panel of nine real currency
     series.</p>
+    </div>
 
+    <div class="col-fig">
     <div class="tablewrap">
       <table class="paramtable">
         <caption>Table 2.1 — calibrated parameter values, transcribed from the chapter.</caption>
@@ -732,7 +741,10 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
         </tbody>
       </table>
     </div>
+    </div>
+  </div>
 
+  <div class="wrap">
     <p class="note"><strong>Three values the model needs and Table 2.1 does not
     give.</strong> The chartists' look-back horizon τ, the foreign rate
     <span class="nowrap"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span></span></span></span></span>, and the floor imposed on each strategy's
@@ -843,7 +855,8 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
 <!-- 10. Playground                                                        -->
 <!-- ===================================================================== -->
 <section id="playground" aria-labelledby="playground-h">
-  <div class="wrap">
+  <div class="layout">
+    <div class="col-text">
     <p class="eyebrow">Try it yourself</p>
     <h2 id="playground-h">Turn the dials</h2>
 
@@ -851,9 +864,7 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
     values. The upper panel is the price against the fundamental; the lower band
     is the population, showing what share of the traders is currently following
     each strategy. Push the herding dial up and watch the band swing.</p>
-  </div>
 
-  <div class="wrap-wide">
     <div class="buttonrow" role="group" aria-label="Presets">
       <button class="btn" type="button" data-preset="calibrated" aria-pressed="true">Calibrated</button>
       <button class="btn" type="button" data-preset="herding">Strong herding</button>
@@ -884,8 +895,10 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
       <button class="btn primary" type="button" id="pg-toggle" aria-pressed="true">Pause</button>
       <button class="btn" type="button" id="pg-reset">Reset</button>
     </div>
+    </div>
 
-    <figure style="margin-top:1.2rem">
+    <div class="col-fig">
+    <figure class="pg-figure">
       <canvas id="pg-price" height="250" aria-hidden="true"></canvas>
       <canvas id="pg-pop" height="70" style="margin-top:6px" aria-hidden="true"></canvas>
       <p class="hero-legend">
@@ -905,6 +918,7 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
         <span class="provenance">Live in-browser run of a 2026 re-implementation of the 2003 model. Not a figure from the original paper.</span>
       </figcaption>
     </figure>
+    </div>
   </div>
 </section>
 
@@ -990,7 +1004,7 @@ c-10,0,-16.667,5,-20,15z M188 15 H145 v585 v1200 v585 h43z"/></svg></span></span
 </main>
 
 <footer>
-  <div class="wrap-wide">
+  <div class="wrap">
     <p>Agent-Based Financial Market Simulation — Nicolas Boitout and Thierry
     Delahaut, 2003. Page built in 2026; all figures generated by a
     re-implementation of the model, not extracted from the original paper.</p>

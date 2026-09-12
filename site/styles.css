@@ -35,6 +35,7 @@
     Consolas, "Liberation Mono", monospace;
 
   --measure: 34rem;   /* ~68 characters at this size */
+  --page: 72rem;      /* the document's full width */
   --wide: 58rem;
   --gutter: 1.25rem;
 }
@@ -119,9 +120,64 @@ a { color: inherit; text-decoration-color: var(--rule-strong); text-underline-of
 a:hover { text-decoration-color: currentColor; }
 
 /* --- Layout ------------------------------------------------------------- */
+/*
+   One grid for the whole document: a prose column of a fixed reading measure,
+   and a figure column that takes whatever is left. Sections with something to
+   show put it in the second column; sections that are only prose leave it
+   empty, and the prose stays on the same left edge throughout rather than
+   jumping between centred and not. Anything that needs the full width — a
+   two-panel figure, a wide table — spans both.
+*/
 
-.wrap { max-width: var(--measure); margin-inline: auto; padding-inline: var(--gutter); }
-.wrap-wide { max-width: var(--wide); margin-inline: auto; padding-inline: var(--gutter); }
+.wrap,
+.layout {
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Prose-only blocks: the block is page-width, its children keep the measure. */
+.wrap > * { max-width: var(--measure); }
+.wrap > .mechanics,
+.wrap > .tablewrap { max-width: 52rem; }
+.mech-body > p,
+.mech-body > ul,
+.mech-body > .note { max-width: var(--measure); }
+
+.layout { display: grid; gap: 1.75rem; }
+.layout > * { min-width: 0; }
+.layout > .col-full { grid-column: 1 / -1; }
+
+.gallery {
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+@media (min-width: 1120px) {
+  .layout {
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    gap: 2.25rem 3rem;
+    align-items: start;
+  }
+  .layout--center { align-items: center; }
+  /* Columns are placed explicitly, so a figure can keep the natural document
+     order of chart-then-caption while the caption still reads on the left. */
+  .layout > .col-text { grid-column: 1; grid-row: 1; }
+  .layout > .col-fig { grid-column: 2; grid-row: 1; }
+  /* A figure that opens a section sits level with the prose beside it, not
+     with the section's first paragraph. */
+  .layout > .col-fig > figure:first-child,
+  .layout > figure:first-child { margin-top: 0; }
+}
+
+@media (min-width: 1500px) {
+  :root { --page: 80rem; }
+}
+
+@media (min-width: 1800px) {
+  :root { --page: 88rem; }
+}
 
 main > section { padding-block: clamp(3rem, 7vw, 5.5rem); border-top: 1px solid var(--rule); }
 main > section:first-of-type { border-top: 0; }
@@ -235,17 +291,7 @@ p + h3 { margin-top: 2.4rem; }
 
 .hero { padding-block: clamp(1.5rem, 3.5vw, 2.2rem) clamp(1.4rem, 3vw, 1.9rem); }
 
-/* Two columns from the width at which the dashboard's own panels can still sit
-   side by side. Below that the copy stacks above the dashboard. The point of
-   the two-column form is that the whole hero clears the fold on a laptop. */
-.hero-grid { display: grid; gap: 2rem; align-items: start; }
-
-@media (min-width: 900px) {
-  .hero-grid {
-    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-    gap: 2.75rem;
-    align-items: center;
-  }
+@media (min-width: 1120px) {
   .hero h1 { font-size: clamp(1.85rem, 0.8rem + 1.8vw, 2.5rem); margin-bottom: 0.45rem; }
   .hero .byline { margin-bottom: 1rem; }
   .hero-claim { font-size: 1.02em; margin-bottom: 0.9rem; }
@@ -259,7 +305,7 @@ p + h3 { margin-top: 2.4rem; }
    hero, the type and the panels shrink together rather than the hero spilling
    past the fold — the dashboard is worth nothing if you have to scroll to
    find it. */
-@media (min-width: 900px) and (max-height: 800px) {
+@media (min-width: 1120px) and (max-height: 800px) {
   .hero { padding-block: 1.2rem 1.2rem; }
   .hero h1 { font-size: clamp(1.7rem, 0.7rem + 1.5vw, 2.15rem); }
   .hero .byline { font-size: 0.82rem; margin-bottom: 0.8rem; }
@@ -323,6 +369,7 @@ p + h3 { margin-top: 2.4rem; }
 /* --- Figures ------------------------------------------------------------ */
 
 figure { margin: 2rem 0 0; }
+figure.layout { margin-top: 2.5rem; padding-inline: 0; max-width: none; }
 figure svg { display: block; width: 100%; height: auto; }
 figure canvas { display: block; width: 100%; }
 
@@ -657,4 +704,34 @@ footer {
 @media (max-width: 620px) {
   .dash { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
   .dash-legend { margin-left: 0; width: 100%; }
+}
+
+/* The playground's figure carries its own top margin from the controls above
+   it when stacked, and none when it sits beside them. */
+.pg-figure { margin-top: 1.2rem; }
+@media (min-width: 1120px) { .pg-figure { margin-top: 0; } }
+
+/* In the results gallery the chart is the product, so its caption is set in a
+   narrower column than body prose — still on the same left edge, but giving
+   the chart back about two hundred pixels. */
+@media (min-width: 1120px) {
+  .gallery .layout { grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); }
+  .gallery figcaption { max-width: none; }
+}
+
+/* Two blocks that are lists rather than argument, and so can use the width the
+   prose column deliberately leaves alone. */
+@media (min-width: 1120px) {
+  .wrap > .ledger {
+    max-width: 64rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .wrap > .ledger > div:last-child { border-bottom: 0; }
+
+  .wrap > .biblio { max-width: 52rem; }
+  .biblio ul { columns: 2; column-gap: 3rem; }
+  .biblio li { break-inside: avoid; }
 }

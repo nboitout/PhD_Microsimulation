@@ -197,6 +197,29 @@ makes no network request to any third party, and opens correctly from the
 filesystem. The charts are hand-rolled SVG, with one canvas for the 2,500-spike
 return plot where SVG would be wasteful.
 
+## Page layout
+
+The document is one grid: a prose column at a fixed reading measure of 34rem,
+and a figure column that takes whatever is left. Sections with something to
+show put it in the second column; sections that are only prose leave it empty.
+The prose therefore keeps the same left edge and the same line length all the
+way down the page, rather than jumping between centred and not. Anything that
+needs the full width — the business-time staircase, the reference table — spans
+both columns with `.col-full`.
+
+Markup is `<div class="layout">` with `.col-text`, `.col-fig` and `.col-full`
+children; prose-only sections stay on `.wrap`, whose children are capped at the
+measure. Columns are placed explicitly in CSS, so a `<figure>` can keep the
+natural document order of chart-then-caption while the caption still reads on
+the left of the chart.
+
+Two columns from 1120px — below that the figure column would be too narrow to
+be worth having, so everything stacks and figures take the full width instead.
+**That breakpoint is repeated in `TWO_COLUMN()` in `site/main.js`**, which sizes
+the dashboard's panels, and the two must be changed together. The page width
+steps 72rem → 80rem at 1500px → 88rem at 1800px; only the figure column grows,
+because the prose measure should not.
+
 ## Accessibility
 
 Real heading hierarchy with one `h1`; every control keyboard-operable with a
