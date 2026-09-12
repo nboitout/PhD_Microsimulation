@@ -388,13 +388,21 @@
 
   const RASTER_GUTTER = 34;
 
-  // A phone gets shorter panels and, more importantly, a shorter window: the
-  // raster is only worth drawing while its marks are still separable, and at
-  // 320px a two-day window would pack nine hundred events into a solid band.
+  // Panel heights follow the space the dashboard actually has. Beside the
+  // copy on a laptop it is shorter, so that the whole hero clears the fold;
+  // stacked under the copy it can afford to be taller.
+  const TWO_COLUMN = () => window.matchMedia('(min-width: 900px)').matches;
+  const SHORT = () => window.matchMedia('(max-height: 800px)').matches;
   const narrowDash = () => window.innerWidth < 620;
-  const DASH_H = () => (narrowDash()
-    ? { price: 124, pop: 34, raster: 112, ed: 112 }
-    : { price: 150, pop: 42, raster: 132, ed: 132 });
+  const DASH_H = () => (TWO_COLUMN()
+    ? (SHORT()
+      // The raster needs ten legible rows more than the excess-demand panel
+      // needs three, so they are not given the same height.
+      ? { price: 92, pop: 24, raster: 108, ed: 88 }
+      : { price: 120, pop: 30, raster: 112, ed: 100 })
+    : narrowDash()
+      ? { price: 124, pop: 34, raster: 112, ed: 112 }
+      : { price: 140, pop: 38, raster: 124, ed: 124 });
 
   function heroStill() {
     const img = document.createElement('img');
@@ -651,7 +659,11 @@
     // frame — about fifteen events. Short enough that the raster's gaps are
     // legible rather than crushed against the right-hand edge, long enough that
     // the price line has a shape, and plainly moving within a second.
-    const heroWindow = narrowDash() ? 0.9 : 2;
+    // The window is set from the width the raster actually gets, so that its
+    // marks stay separable: a raster whose gaps have closed up is just a bar.
+    // About four hundred events across the panel, whatever the panel's width.
+    const rasterW = heroCanvases.raster.parentNode.clientWidth || 400;
+    const heroWindow = Math.max(0.6, Math.min(1.8, rasterW / 360));
     Runner.init('hero', { N: 200 }, 8675309, heroWindow, 0.04, heroWindow * 1.1, function (snap) {
       heroSnap = snap;
       heroFrames++;

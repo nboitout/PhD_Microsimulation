@@ -55,11 +55,14 @@
 <!-- 1. Hero                                                               -->
 <!-- ===================================================================== -->
 <section class="hero" aria-labelledby="title">
-  <div class="wrap-wide">
-    <p class="eyebrow">Doctoral dissertation · Chapter 2 · 2003</p>
-    <h1 id="title">A market made of people who disagree</h1>
-    <p class="byline"><b>Nicolas Boitout</b> and <b>Thierry Delahaut</b> — an agent-based microsimulation of the foreign-exchange market</p>
-    <p class="hero-claim lede">Four hundred traders watch each other, change their minds, and push a single price around. Nothing schedules them. Ten competing clocks decide what happens next and when — so the market trades in bursts, the way real ones do.</p>
+  <div class="wrap-wide hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">Doctoral dissertation · Chapter 2 · 2003</p>
+      <h1 id="title">A market made of people who disagree</h1>
+      <p class="byline"><b>Nicolas Boitout</b> and <b>Thierry Delahaut</b> — an agent-based microsimulation of the foreign-exchange market</p>
+      <p class="hero-claim lede">Four hundred traders watch each other, change their minds, and push a single price around. Nothing schedules them. Ten competing clocks decide what happens next and when — so the market trades in bursts, the way real ones do.</p>
+      <p class="hero-what">Chapter 2 of a doctoral dissertation defended in 2003, presented as it was, with the model re-implemented so its figures can be regenerated.</p>
+    </div>
 
     <figure class="hero-figure">
       <div class="dash" id="hero-dash">
@@ -99,25 +102,18 @@
           <div><dt>events so far</dt><dd data-k="events">—</dd></div>
           <div><dt>price</dt><dd data-k="price">—</dd></div>
           <div><dt>from fair value</dt><dd data-k="gap">—</dd></div>
-          <div><dt>traders</dt><dd data-k="n">—</dd></div>
         </dl>
       </div>
 
       <p class="hero-status" id="hero-status"></p>
 
       <figcaption>
-        The model running live in this page, at a reduced population of two
-        hundred traders. All four panels share one axis of simulated time, so
-        they can be read against each other: the raster is every event the
-        market has just had, the price line ticks only where the raster shows a
-        price event, and the imbalance at the bottom right is what decides which
-        way the next tick goes. Nothing here is a recording, and nothing here is
-        on a grid — the gaps between events are as the model made them.
+        Two hundred traders, running live. All four panels share one axis of
+        simulated time: the price steps only where the raster shows a price
+        event, and the imbalance decides which way the next one goes.
         <span class="provenance">Live in-browser run of a 2026 re-implementation of the 2003 model, at a reduced population. Not a figure from the original paper.</span>
       </figcaption>
     </figure>
-
-    <p class="hero-what">This is Chapter 2 of a doctoral dissertation defended in 2003, written in English with Thierry Delahaut. It is presented here as it was, with the model re-implemented in 2026 so that its figures can be regenerated and its behaviour watched rather than only described.</p>
   </div>
 </section>
 

@@ -82,11 +82,19 @@ the raster shows a price event, and both go quiet together. That is the point of
 the dashboard — the irregularity of trading time is the chapter's distinctive
 claim, and it is visible in the first second rather than only described in §2.2.5.
 
-The window is two simulated days on a desktop and about one on a phone, because
-a raster is only worth drawing while its gaps are still separable: at 320px a
-two-day window would pack nine hundred events into a solid band. Under
+The window is set from the width the raster actually gets, because a raster is
+only worth drawing while its gaps are still separable: at 320px a two-day window
+would pack nine hundred events into a solid band. Under
 `prefers-reduced-motion` the whole dashboard is replaced by the pre-rendered
 still in `site/assets/`.
+
+From 900px the hero is two columns, copy on the left and dashboard on the
+right, so that the whole of it clears the fold on a laptop. Laptop screens are
+wide but short, so there is a second tier at `max-height: 800px` where the type
+and the panel heights shrink together; the panel heights live in `DASH_H()` in
+`site/main.js` and the type in the matching media query in `site/styles.css`,
+and the two are meant to be changed together. Measured heights of the hero:
+682px at 1280x700 and 1366x720, 753px at 1512x830.
 
 ## What was available, and what was not
 
