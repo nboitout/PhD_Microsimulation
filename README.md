@@ -16,7 +16,7 @@ engine/build-site.mjs   build step: renders the maths, vendors KaTeX, builds the
 src/index.src.html      the page's source, before the mathematics is rendered
 data/                   the generated series (archival JSON)
 site/                   the deployable site — output only
-vercel.ts               hosting configuration
+vercel.json             hosting configuration
 source/                 the translated chapter and the original Figure 2.1
 ```
 
@@ -239,9 +239,18 @@ Hosted on Vercel, at
 > https://phd-microsimulation.vercel.app
 
 The repository is connected to the Vercel project, so a push to `main` builds
-and deploys. `vercel.ts` is the whole configuration: no framework preset,
+and deploys. `vercel.json` is the whole configuration: no framework preset,
 `npm run build` as the build command, `site` as the output directory, plus
 cache-control and security headers.
+
+It is `vercel.json` rather than the newer `vercel.ts` deliberately. The
+TypeScript form has to be compiled before the build runs, which means Vercel
+installs dependencies first; with it in place, deployments triggered by the Git
+integration failed before producing any build log, while the identical tree
+deployed from the CLI succeeded. `vercel.json` removes that step and the
+`@vercel/config` dependency with it, and the Git builds went green. For a
+static site with one build command, one output directory and a few headers,
+there is nothing the TypeScript form buys.
 
 To deploy by hand instead:
 
@@ -272,7 +281,7 @@ rebuild. Nothing else in the site knows where it lives.
 
 ### Headers
 
-`vercel.ts` sets a Content-Security-Policy that says what the page already
+`vercel.json` sets a Content-Security-Policy that says what the page already
 does: `default-src 'self'` with no host allowed anywhere except the site's own
 origin, so the claim that it makes no third-party request is enforced rather
 than merely intended. `'unsafe-inline'` is needed twice — for the small inline
