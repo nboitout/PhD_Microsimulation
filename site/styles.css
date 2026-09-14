@@ -453,6 +453,34 @@ figcaption .fact {
   margin-top: 0.5rem;
 }
 
+/* --- The summary figure ------------------------------------------------- */
+/* The recap plate under the hero. It spans the page rather than the reading
+   measure, because its three panels are only legible at width, and it keeps
+   its own white ground in both themes: the artwork is drawn on white, so
+   inverting the page around it would leave it glaring without a border. */
+
+.recap {
+  max-width: var(--page);
+  margin: 0 auto clamp(2.75rem, 6.5vw, 5rem);
+  padding-inline: var(--gutter);
+}
+.recap a { display: block; border-radius: 10px; }
+.recap img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.recap figcaption { max-width: 44rem; }
+
+@media (max-width: 600px) {
+  /* At this width the panel labels are no longer readable in place; the link
+     to the full-size file is how the figure is actually read. */
+  .recap figcaption { font-size: 0.84rem; }
+}
+
 /* --- The mechanics disclosure ------------------------------------------- */
 
 .mechanics {

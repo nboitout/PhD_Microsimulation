@@ -17,7 +17,8 @@ src/index.src.html      the page's source, before the mathematics is rendered
 data/                   the generated series (archival JSON)
 site/                   the deployable site — output only
 vercel.json             hosting configuration
-source/                 the translated chapter and the original Figure 2.1
+source/                 the translated chapter, the original Figure 2.1,
+                        and the summary figure the page opens with
 ```
 
 ## Building
@@ -199,6 +200,29 @@ makes no network request to any third party, and opens correctly from the
 filesystem. The charts are hand-rolled SVG, with one canvas for the 2,500-spike
 return plot where SVG would be wasteful.
 
+## The opening figure
+
+`source/FX Microsimulation.png` recaps the whole model on one page: the three
+kinds of trader, the event-driven clock, and the four regularities that come out
+of them. It is reproduced immediately below the hero and above `The problem`, at
+full page width and outside every section, so that it is the first thing a
+reader meets and the argument that follows has something to refer back to.
+
+The deployed copy is `site/assets/how-the-model-works.png`, because only `site/`
+is served and `source/` is excluded from the upload. It is 1.44 MB and above the
+fold, so it loads eagerly with its dimensions declared to avoid reflow, and it
+links to itself at full size: below about 600px the panel labels are too small
+to read in place, and opening the file is how the figure is actually read there.
+Lossless recompression was tried and returned under four per cent, so the file
+is served as supplied.
+
+The artwork is drawn on white. Rather than invert it in the dark theme, which
+would mangle its own palette, the figure keeps its white ground in both themes
+and carries a border so that it reads as a plate rather than a glare. Its
+caption says what the figure is: a summary drawn in 2026 for this presentation,
+with schematic rather than measured panels, and not a figure from the original
+paper.
+
 ## Page layout
 
 The document is one grid: a prose column at a fixed reading measure of 34rem,
@@ -291,7 +315,7 @@ stable for the life of a KaTeX release; the generated data is revalidated every
 five minutes, since it is rewritten by every build and must not be served stale
 beside a page expecting new fields.
 
-## Not part of the published site## Not part of the published site
+## Not part of the published site
 
 `site/` is output: it is what gets served, so nothing that is not part of the
 site lives there. The page's source is `src/index.src.html`, which
