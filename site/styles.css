@@ -583,6 +583,18 @@ ul.plain li::before {
   width: 0.4rem; height: 1px; background: var(--rule-strong);
 }
 
+/* The three strategies, each marked with the colour it has in every figure. */
+ul.strategies { list-style: none; padding: 0; margin: 0 0 1.15rem; }
+ul.strategies li { padding-left: 1.3rem; position: relative; margin-bottom: 0.55rem; }
+ul.strategies li::before {
+  content: ""; position: absolute; left: 0.1rem; top: 0.62em;
+  width: 0.55rem; height: 0.55rem; border-radius: 50%;
+  background: var(--ink-mute);
+}
+ul.strategies li.optimist::before { background: var(--optimist); }
+ul.strategies li.pessimist::before { background: var(--pessimist); }
+ul.strategies li.fundamentalist::before { background: var(--fundamentalist); }
+
 .ledger { margin: 1.4rem 0; }
 .ledger > div {
   border-top: 1px solid var(--rule);
