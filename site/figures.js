@@ -29,8 +29,15 @@
   ];
 
   // =======================================================================
-  // The three strategies
+  // The crowd: three strategies, six switches, one live population
   // =======================================================================
+  //
+  // One dot is one trader. The model in sim-core.js runs underneath, event by
+  // event, and every switch it realises is drawn as a dot travelling along the
+  // arrow for that switch. Switches are replayed at the simulated times they
+  // happened, scaled to a watchable speed, so the bursts are the model's own
+  // rather than an animation's rhythm. Arrow width follows the switch's
+  // current rate, so a flow can be seen strengthening before it fires.
 
   const SWITCHES = [
     { i: 0, from: 'pess', to: 'opt', label: 'a pessimist turns optimistic',
@@ -47,135 +54,475 @@
       why: 'The pessimist abandons the chart for the gap between price and fundamental value, discounted because the correction is not immediate.' },
   ];
 
-  function strategyDiagram(node) {
-    register(node, function () {
-      const H = 430;
+  const STRATEGY = {
+    opt: { colour: 'var(--optimist)', name: 'Optimistic chartists', sub: 'expect a rise — they buy' },
+    pess: { colour: 'var(--pessimist)', name: 'Pessimistic chartists', sub: 'expect a fall — they sell' },
+    fund: { colour: 'var(--fundamentalist)', name: 'Fundamentalists', sub: 'trade the gap to fair value' },
+  };
+
+  // Small enough that every trader is a visible dot, large enough that the
+  // shares move smoothly. The calibrated population is 400.
+  const CROWD_N = 120;
+  // Simulated days per second of real time, for the two speeds.
+  const SPEEDS = { watch: 0.012, fast: 0.2 };
+  const HOUR = 1 / 24;
+
+  function strategyDiagram(node, ui) {
+    const SimCore = global.SimCore;
+    if (!SimCore || !node) return;
+    const reduceMotion = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let market = null;
+    let a1 = 0.7;
+    let speed = 'watch';
+    let running = false;
+    let visible = false;
+    let switches = 0;
+    const rateBuf = new Float64Array(10);
+    const shownRate = new Float64Array(6);   // smoothed, for arrow widths
+
+    // Scene state, rebuilt by draw() on resize or theme change.
+    let geo = null;          // node centres, radii, arrow curves
+    let dots = [];           // { el, key, x, y, fly }
+    let members = null;      // { opt: [dotIndex…], pess: […], fund: […] }
+    let arrowEls = [];       // per switch: { line, hit }
+    let countEls = {};
+    let hover = -1;
+    const pending = [];      // switches waiting to be replayed: { at, s }
+
+    function newMarket() {
+      market = new SimCore.Market({ N: CROWD_N, a1 }, 20030601);
+      // Settle for a simulated day, so the crowd does not open at an exact
+      // three-way split that the model would never otherwise show.
+      let guard = 0;
+      while (market.t < 1 && guard++ < 200000) market.step();
+      switches = 0;
+      pending.length = 0;
+    }
+
+    function counts() {
+      return { opt: market.nPlus, pess: market.nMinus, fund: market.nFund };
+    }
+
+    // Phyllotaxis packing: slot k sits a little further out than slot k-1, so
+    // a cluster grows and shrinks from its rim and never shows a hole.
+    function slot(key, k) {
+      const g = geo.nodes[key];
+      const a = k * 2.399963;
+      const r = geo.spacing * Math.sqrt(k + 0.5);
+      return [g.x + r * Math.cos(a), g.y + r * Math.sin(a)];
+    }
+
+    function assignAll() {
+      const c = counts();
+      members = { opt: [], pess: [], fund: [] };
+      let d = 0;
+      for (const key of ['opt', 'pess', 'fund']) {
+        for (let k = 0; k < c[key]; k++, d++) {
+          members[key].push(d);
+          const dot = dots[d];
+          const [x, y] = slot(key, k);
+          dot.key = key; dot.x = x; dot.y = y; dot.fly = null;
+          dot.el.setAttribute('cx', x.toFixed(1));
+          dot.el.setAttribute('cy', y.toFixed(1));
+          dot.el.setAttribute('fill', STRATEGY[key].colour);
+        }
+      }
+      paintCounts();
+    }
+
+    function paintCounts() {
+      if (!members) return;
+      for (const key in countEls) {
+        const n = members[key].length;
+        countEls[key].textContent = n + ' · ' + Math.round((100 * n) / CROWD_N) + '%';
+      }
+    }
+
+    function draw() {
+      const W0 = Math.max(320, Math.round(node.clientWidth || 600));
+      const narrow = W0 < 520;
+      const R = Math.max(46, Math.min(70, W0 * 0.12));
+      const dx = Math.min(W0 / 2 - R - 14, 250);
+      const topY = (narrow ? 42 : 62) + R;
+      const fundY = topY + Math.max(190, dx * 1.05);
+      const H = Math.round(fundY + R + (narrow ? 42 : 52));
       const { svg, W } = frame(node, H);
       const cx = W / 2;
-      const nodes = {
-        opt: { x: Math.max(90, cx - Math.min(280, W * 0.3)), y: 88, colour: 'var(--optimist)', name: 'Optimistic chartists', sub: 'expect a rise — they buy' },
-        pess: { x: Math.min(W - 90, cx + Math.min(280, W * 0.3)), y: 88, colour: 'var(--pessimist)', name: 'Pessimistic chartists', sub: 'expect a fall — they sell' },
-        fund: { x: cx, y: 250, colour: 'var(--fundamentalist)', name: 'Fundamentalists', sub: 'trade the gap to fair value' },
+
+      geo = {
+        nodes: {
+          opt: { x: cx - dx, y: topY },
+          pess: { x: cx + dx, y: topY },
+          fund: { x: cx, y: fundY },
+        },
+        R,
+        // Up to 80% of the crowd can sit in one strategy; that many dots must fit.
+        spacing: (R - 5) / Math.sqrt(CROWD_N * 0.8 + 0.5),
+        arrows: [],
       };
+      const dotR = Math.max(1.6, geo.spacing * 0.46);
 
       const defs = el('defs');
-      for (const key in nodes) {
-        const mk = el('marker', {
-          id: 'arrow-' + key, viewBox: '0 0 10 10', refX: 9, refY: 5,
-          markerWidth: 6, markerHeight: 6, orient: 'auto-start-reverse',
-        }, [el('path', { d: 'M0 0 L10 5 L0 10 z', fill: nodes[key].colour })]);
-        defs.appendChild(mk);
+      for (const key in STRATEGY) {
+        defs.appendChild(el('marker', {
+          id: 'crowd-arrow-' + key, viewBox: '0 0 10 10', refX: 8, refY: 5,
+          markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse',
+          orient: 'auto-start-reverse',
+        }, [el('path', { d: 'M0 0 L10 5 L0 10 z', fill: STRATEGY[key].colour })]));
       }
       svg.appendChild(defs);
 
-      const arrows = el('g');
-      const R = 44;
-
-      for (const s of SWITCHES) {
-        const a = nodes[s.from], b = nodes[s.to];
-        const dx = b.x - a.x, dy = b.y - a.y;
-        const len = Math.hypot(dx, dy);
-        const ux = dx / len, uy = dy / len;
-        // Offset the two directions of each edge so they do not overlap.
-        const ox = -uy, oy = ux;
-        const off = 11;
-        const x1 = a.x + ux * R + ox * off, y1 = a.y + uy * R + oy * off;
-        const x2 = b.x - ux * (R + 7) + ox * off, y2 = b.y - uy * (R + 7) + oy * off;
-        const mx = (x1 + x2) / 2 + ox * 16, my = (y1 + y2) / 2 + oy * 16;
-
-        const d = `M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
-        // Focusable so that a keyboard visitor can reveal the explanation, but
-        // labelled as an image rather than a button: nothing is activated, the
-        // description is simply shown.
-        const g = el('g', { class: 'switch-arrow', tabindex: '0', role: 'img',
-          'aria-label': s.label + '. ' + s.why });
-        g.appendChild(el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 16 }));
-        const line = el('path', {
-          d, fill: 'none', stroke: b.colour, 'stroke-width': 1.5, opacity: 0.55,
-          'marker-end': `url(#arrow-${s.to})`,
-        });
-        g.appendChild(line);
-
-        const lx = mx + ox * 8, ly = my + oy * 8;
-        const sym = text(SYMBOLS[s.i], {
-          x: lx, y: ly, class: 'clocklabel', 'text-anchor': 'middle',
-          fill: 'var(--ink-mute)', 'font-size': 11,
-        });
-        g.appendChild(sym);
-
-        g.addEventListener('mouseenter', () => show(s, line));
-        g.addEventListener('focus', () => show(s, line));
-        g.addEventListener('mouseleave', hide);
-        g.addEventListener('blur', hide);
-        arrows.appendChild(g);
-      }
-      svg.appendChild(arrows);
-
-      for (const key in nodes) {
-        const nd = nodes[key];
-        const g = el('g');
-        g.appendChild(el('circle', { cx: nd.x, cy: nd.y, r: R, fill: 'var(--bg)', stroke: nd.colour, 'stroke-width': 1.6 }));
-        g.appendChild(el('circle', { cx: nd.x, cy: nd.y, r: R - 7, fill: nd.colour, opacity: 0.1 }));
+      // Rings first, so the arrows and the dots in flight draw over them.
+      for (const key in STRATEGY) {
+        const nd = geo.nodes[key], st = STRATEGY[key];
+        svg.appendChild(el('circle', { cx: nd.x, cy: nd.y, r: R, fill: st.colour, 'fill-opacity': 0.07, stroke: st.colour, 'stroke-width': 1.4 }));
         const below = key === 'fund';
-        g.appendChild(text(nd.name, {
-          x: nd.x, y: below ? nd.y + R + 20 : nd.y - R - 16,
-          class: 'serieslabel', 'text-anchor': 'middle', fill: nd.colour,
+        svg.appendChild(text(st.name, {
+          x: nd.x, y: below ? nd.y + R + 18 : nd.y - R - (narrow ? 24 : 38),
+          class: 'serieslabel', 'text-anchor': 'middle', fill: st.colour,
         }));
-        g.appendChild(text(nd.sub, {
-          x: nd.x, y: below ? nd.y + R + 35 : nd.y - R - 2,
-          class: 'annot', 'text-anchor': 'middle',
-        }));
-        svg.appendChild(g);
+        const count = text('', {
+          x: nd.x, y: below ? nd.y + R + 33 : nd.y - R - (narrow ? 10 : 23),
+          class: 'annot crowd-count', 'text-anchor': 'middle', fill: 'var(--ink-soft)',
+        });
+        countEls[key] = count;
+        svg.appendChild(count);
+        if (!narrow) {
+          svg.appendChild(text(st.sub, {
+            x: nd.x, y: below ? nd.y + R + 47 : nd.y - R - 9,
+            class: 'annot', 'text-anchor': 'middle',
+          }));
+        }
       }
 
-      const caption = text('', {
-        x: cx, y: H - 8, class: 'annot', 'text-anchor': 'middle', fill: 'var(--ink)',
-      });
-      svg.appendChild(caption);
+      arrowEls = [];
+      const arrowLayer = el('g');
+      for (const s of SWITCHES) {
+        const a = geo.nodes[s.from], b = geo.nodes[s.to];
+        const ddx = b.x - a.x, ddy = b.y - a.y;
+        const len = Math.hypot(ddx, ddy);
+        const ux = ddx / len, uy = ddy / len;
+        // The two directions of each edge bow to opposite sides.
+        const ox = -uy, oy = ux, off = 10;
+        const x1 = a.x + ux * (R + 4) + ox * off, y1 = a.y + uy * (R + 4) + oy * off;
+        const x2 = b.x - ux * (R + 6) + ox * off, y2 = b.y - uy * (R + 6) + oy * off;
+        const mx = (x1 + x2) / 2 + ox * 22, my = (y1 + y2) / 2 + oy * 22;
+        geo.arrows[s.i] = { x1, y1, x2, y2, mx, my };
+        const d = `M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 
-      let active = null;
-      function show(s, line) {
-        hide();
-        active = line;
-        line.setAttribute('opacity', '1');
-        line.setAttribute('stroke-width', '2.6');
-        caption.textContent = s.label.charAt(0).toUpperCase() + s.label.slice(1) + '. ' + s.why;
-        wrapCaption(caption, cx, W - 40, H);
+        // Focusable so that a keyboard visitor can reveal the explanation;
+        // labelled as an image because nothing is activated.
+        const g = el('g', { class: 'switch-arrow', tabindex: '0', role: 'img',
+          'aria-label': SYMBOLS[s.i] + ': ' + s.label + '. ' + s.why });
+        const hit = el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 22 });
+        const line = el('path', {
+          d, fill: 'none', stroke: STRATEGY[s.to].colour, 'stroke-linecap': 'round',
+          'stroke-width': 1.5, opacity: 0.5, 'marker-end': `url(#crowd-arrow-${s.to})`,
+        });
+        g.appendChild(hit);
+        g.appendChild(line);
+        g.appendChild(text(SYMBOLS[s.i], {
+          x: mx + ox * 13, y: my + oy * 13 + 4, class: 'clocklabel', 'text-anchor': 'middle',
+        }));
+        const enter = () => { hover = s.i; paintArrows(); explain(); };
+        const leave = () => { if (hover === s.i) { hover = -1; paintArrows(); explain(); } };
+        g.addEventListener('mouseenter', enter);
+        g.addEventListener('focus', enter);
+        g.addEventListener('mouseleave', leave);
+        g.addEventListener('blur', leave);
+        g.addEventListener('pointerdown', enter);
+        arrowEls[s.i] = { line, g };
+        arrowLayer.appendChild(g);
       }
-      function hide() {
-        if (active) { active.setAttribute('opacity', '0.55'); active.setAttribute('stroke-width', '1.5'); }
-        active = null;
-        caption.textContent = '';
-        caption.replaceChildren();
+      svg.appendChild(arrowLayer);
+
+      const dotLayer = el('g', { 'aria-hidden': 'true' });
+      dots = [];
+      for (let i = 0; i < CROWD_N; i++) {
+        const c = el('circle', { r: dotR.toFixed(2) });
+        dotLayer.appendChild(c);
+        dots.push({ el: c, key: null, x: 0, y: 0, fly: null });
       }
+      svg.appendChild(dotLayer);
 
       svg.appendChild(el('title', {}, [document.createTextNode(
-        'A diagram of the three strategies — optimistic chartists, pessimistic ' +
-        'chartists and fundamentalists — joined by six arrows, one for each way ' +
-        'a trader can switch from one strategy to another.')]));
-    });
-  }
+        'A live diagram of ' + CROWD_N + ' traders, one dot each, grouped into ' +
+        'optimistic chartists, pessimistic chartists and fundamentalists, and ' +
+        'joined by six arrows, one for each way a trader can switch strategy. ' +
+        'Dots move along the arrows as the model realises each switch.')]));
 
-  // Word-wrap an SVG text node into tspans, since SVG will not do it.
-  function wrapCaption(node, cx, maxWidth, H) {
-    const words = node.textContent.split(' ');
-    node.textContent = '';
-    const perLine = Math.max(6, Math.floor(maxWidth / 6.4));
-    const lines = [];
-    let line = '';
-    for (const w of words) {
-      if ((line + ' ' + w).trim().length > perLine) { lines.push(line.trim()); line = w; }
-      else line += ' ' + w;
+      // Any flight in progress is abandoned: the scene has just been rebuilt.
+      assignAll();
+      readRates(true);
+      paintArrows();
     }
-    if (line.trim()) lines.push(line.trim());
-    const start = H - 8 - (lines.length - 1) * 13;
-    lines.forEach((l, i) => {
-      const t = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-      t.setAttribute('x', cx);
-      t.setAttribute('y', start + i * 13);
-      t.textContent = l;
-      node.appendChild(t);
-    });
+
+    // --- the model's side -------------------------------------------------
+
+    function readRates(snap) {
+      market.rates(rateBuf);
+      for (let i = 0; i < 6; i++) {
+        shownRate[i] = snap ? rateBuf[i] : shownRate[i] + 0.15 * (rateBuf[i] - shownRate[i]);
+      }
+    }
+
+    function paintArrows() {
+      if (!arrowEls.length) return;
+      let max = 0;
+      for (let i = 0; i < 6; i++) max = Math.max(max, shownRate[i]);
+      for (let i = 0; i < 6; i++) {
+        const w = 1 + 6.5 * Math.sqrt(shownRate[i] / (max || 1));
+        const on = hover === i;
+        arrowEls[i].line.setAttribute('stroke-width', (on ? w + 1.5 : w).toFixed(2));
+        arrowEls[i].line.setAttribute('opacity', hover >= 0 ? (on ? '1' : '0.25') : '0.55');
+      }
+    }
+
+    // Advance the model by `days` of simulated time, queueing every switch it
+    // realises at the moment of simulated time it happened.
+    function advance(days) {
+      const target = market.t + days;
+      let guard = 0;
+      while (market.t < target && guard++ < 20000) {
+        const o = market.nPlus, m = market.nMinus;
+        const win = market.step();
+        if (win < 0 || win > 5) continue;
+        // A switch that would break a population floor is void in the model.
+        if (market.nPlus === o && market.nMinus === m) continue;
+        pending.push({ at: market.t, s: SWITCHES[win] });
+      }
+    }
+
+    function launch(s, instant) {
+      const src = members[s.from], dst = members[s.to];
+      if (!src.length) return;
+      const d = src.pop();
+      dst.push(d);
+      switches++;
+      const dot = dots[d];
+      const [tx, ty] = slot(s.to, dst.length - 1);
+      const arrow = geo.arrows[s.i];
+      if (instant) {
+        dot.key = s.to; dot.x = tx; dot.y = ty; dot.fly = null;
+        dot.el.setAttribute('cx', tx.toFixed(1));
+        dot.el.setAttribute('cy', ty.toFixed(1));
+        dot.el.setAttribute('fill', STRATEGY[s.to].colour);
+      } else {
+        dot.fly = {
+          t0: performance.now(), dur: speed === 'fast' ? 520 : 900,
+          p0: [dot.x, dot.y], c1: [arrow.mx, arrow.my], p1: [tx, ty], to: s.to, recoloured: false,
+        };
+        dot.el.setAttribute('r', (Math.max(1.6, geo.spacing * 0.46) * 1.7).toFixed(2));
+      }
+      paintCounts();
+    }
+
+    function flyDots(now) {
+      const baseR = Math.max(1.6, geo.spacing * 0.46).toFixed(2);
+      for (const dot of dots) {
+        const f = dot.fly;
+        if (!f) continue;
+        let u = Math.min(1, (now - f.t0) / f.dur);
+        const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        const v = 1 - e;
+        const x = v * v * f.p0[0] + 2 * v * e * f.c1[0] + e * e * f.p1[0];
+        const y = v * v * f.p0[1] + 2 * v * e * f.c1[1] + e * e * f.p1[1];
+        dot.el.setAttribute('cx', x.toFixed(1));
+        dot.el.setAttribute('cy', y.toFixed(1));
+        if (!f.recoloured && e > 0.5) {
+          dot.el.setAttribute('fill', STRATEGY[f.to].colour);
+          f.recoloured = true;
+        }
+        if (u >= 1) {
+          dot.x = f.p1[0]; dot.y = f.p1[1]; dot.key = f.to; dot.fly = null;
+          dot.el.setAttribute('r', baseR);
+        }
+      }
+    }
+
+    // --- the readouts under the figure --------------------------------------
+
+    const gauges = ui && ui.gauges ? ui.gauges : null;
+    function setGauge(name, frac, value, colour) {
+      if (!gauges) return;
+      const g = gauges.querySelector('[data-g="' + name + '"]');
+      if (!g) return;
+      const mark = g.querySelector('.gauge-mark');
+      const out = g.querySelector('.gauge-value');
+      const f = Math.max(0, Math.min(1, frac));
+      mark.style.left = (f * 100).toFixed(1) + '%';
+      if (colour) mark.style.background = colour;
+      if (out.textContent !== value) out.textContent = value;
+    }
+
+    function paintGauges() {
+      const nc = market.nPlus + market.nMinus;
+      const x = nc ? (market.nPlus - market.nMinus) / nc : 0;
+      const lag = market.trail.at(market.t - market.P.tau);
+      const trend = 100 * (market.p - lag) / market.P.tau / market.p;   // % a day
+      const gap = 100 * (market.p - market.pf) / market.pf;             // %
+      setGauge('herd', (x + 1) / 2, (x >= 0 ? '+' : '') + x.toFixed(2),
+        x >= 0 ? 'var(--optimist)' : 'var(--pessimist)');
+      setGauge('trend', 0.5 + trend / 6, (trend >= 0 ? '+' : '') + trend.toFixed(2) + '% a day',
+        trend >= 0 ? 'var(--optimist)' : 'var(--pessimist)');
+      setGauge('gap', 0.5 + gap / 16, (gap >= 0 ? '+' : '') + gap.toFixed(1) + '%',
+        'var(--fundamentalist)');
+      if (ui && ui.clock) {
+        const t = market.t;
+        const day = Math.floor(t);
+        const mins = Math.floor((t - day) * 1440);
+        ui.clock.textContent = 'simulated day ' + day + ', ' +
+          String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0') +
+          ' · ' + switches.toLocaleString('en') + ' switches · price ' + market.p.toFixed(1) +
+          ', fundamental ' + market.pf.toFixed(1);
+      }
+    }
+
+    function explain() {
+      if (!ui || !ui.explain) return;
+      const box = ui.explain;
+      box.replaceChildren();
+      if (hover < 0) {
+        box.textContent = 'Point at an arrow, or tab to it, to see what drives that switch ' +
+          'and how often it is firing right now. Thicker arrows are firing faster.';
+        return;
+      }
+      const s = SWITCHES[hover];
+      const b = document.createElement('b');
+      b.textContent = SYMBOLS[s.i] + ' — ' + s.label + '. ';
+      box.appendChild(b);
+      const perHour = rateBuf[s.i] * CROWD_N * HOUR;
+      box.appendChild(document.createTextNode(s.why + ' In the market as it stands, this happens about ' +
+        (perHour >= 10 ? Math.round(perHour) : perHour.toFixed(1)) + ' times a simulated hour.'));
+    }
+
+    // --- the loop -----------------------------------------------------------
+
+    let last = 0, simClock = 0, lastExplain = 0;
+    // A frame is requested from requestAnimationFrame with a timer racing it.
+    // A background or occluded tab may deliver no animation frames at all, and
+    // a loop that waits only on them would latch and never resume.
+    let scheduled = false, rafId = 0, timerId = 0;
+    function schedule() {
+      if (scheduled) return;
+      scheduled = true;
+      const tick = () => {
+        if (!scheduled) return;
+        scheduled = false;
+        cancelAnimationFrame(rafId);
+        clearTimeout(timerId);
+        frameLoop(performance.now());
+      };
+      rafId = requestAnimationFrame(tick);
+      timerId = setTimeout(tick, 50);
+    }
+
+    function frameLoop(now) {
+      if (!running || !visible) return;
+      if (!last) { last = now; simClock = Math.max(simClock, market.t - SPEEDS[speed] * 0.25); }
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+
+      // Keep the model a little ahead of what is being shown, then replay the
+      // queued switches as the display clock passes the time each happened.
+      simClock += dt * SPEEDS[speed];
+      if (market.t < simClock + SPEEDS[speed] * 0.25) advance(SPEEDS[speed] * 0.25);
+      let flying = 0;
+      for (const d of dots) if (d.fly) flying++;
+      while (pending.length && pending[0].at <= simClock) {
+        const p = pending.shift();
+        // When the crowd is in a rush, the excess lands without a flight.
+        launch(p.s, reduceMotion || flying++ > 24);
+      }
+      flyDots(now);
+      readRates(false);
+      paintArrows();
+      paintGauges();
+      if (hover >= 0 && now - lastExplain > 400) { lastExplain = now; explain(); }
+      schedule();
+    }
+
+    function kick() {
+      if (running && visible && !scheduled) { last = 0; schedule(); }
+    }
+
+    function setRunning(on) {
+      running = on;
+      if (ui && ui.toggle) {
+        ui.toggle.textContent = on ? 'Pause' : 'Play';
+        ui.toggle.setAttribute('aria-pressed', String(on));
+      }
+      if (on) kick();
+    }
+
+    // Deliver everything already computed at once, e.g. before a reset or a
+    // news shock, so the dots and the counts agree with the model again.
+    function flush() {
+      while (pending.length) launch(pending.shift().s, true);
+      for (const d of dots) if (d.fly) {
+        d.fly.t0 = 0; d.fly.dur = 1; // lands on the next frame
+      }
+      simClock = market.t;
+    }
+
+    newMarket();
+    register(node, draw);
+    explain();
+    paintGauges();
+
+    if (ui && ui.toggle) ui.toggle.addEventListener('click', () => setRunning(!running));
+    if (ui && ui.speed) {
+      ui.speed.addEventListener('click', () => {
+        speed = speed === 'watch' ? 'fast' : 'watch';
+        ui.speed.setAttribute('aria-pressed', String(speed === 'fast'));
+        simClock = Math.min(simClock, market.t);
+      });
+    }
+    if (ui && ui.reset) {
+      ui.reset.addEventListener('click', () => {
+        newMarket();
+        assignAll();
+        readRates(true);
+        paintArrows();
+        paintGauges();
+        explain();
+        simClock = market.t; last = 0;
+      });
+    }
+    // News moves the fundamental value, never the price: this is thirty of the
+    // model's own news events (β₉ or β₁₀) arriving at once, and the crowd then
+    // responds to the gap by its own rules.
+    const news = (sign) => () => {
+      flush();
+      market.pf = Math.max(1, market.pf + sign * 30 * market.P.tick);
+      readRates(true);
+      paintGauges();
+      if (!running) setRunning(true);
+    };
+    if (ui && ui.good) ui.good.addEventListener('click', news(+1));
+    if (ui && ui.bad) ui.bad.addEventListener('click', news(-1));
+    if (ui && ui.herd) {
+      ui.herd.addEventListener('input', () => {
+        a1 = parseFloat(ui.herd.value);
+        market.P.a1 = a1;
+        if (ui.herdOut) ui.herdOut.textContent = a1.toFixed(2);
+      });
+    }
+
+    // Under reduced motion it waits for Play. The observer only pauses it while
+    // it is off screen; it is not what starts it, so a browser that never
+    // reports an intersection still gets a running figure.
+    visible = true;
+    setRunning(!reduceMotion);
+    if ('IntersectionObserver' in global) {
+      new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          visible = e.isIntersecting;
+          if (visible) kick();
+        }
+      }, { threshold: 0 }).observe(node);
+    }
   }
 
   // =======================================================================

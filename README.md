@@ -71,7 +71,9 @@ Do not edit `site/sim-core.js`: edit the model and rebuild.
 
 ## The live panels
 
-`site/sim-driver.js` drives the model for the two live panels, in two modes.
+`site/sim-driver.js` drives the model for the hero dashboard and the
+playground, in two modes. The third live panel, the crowd, runs without it; see
+below.
 
 **`daily`** feeds the playground. It advances whole simulated days and records
 each day's closing price, which is the chapter's own recording rule. Someone
@@ -98,6 +100,25 @@ and the panel heights shrink together; the panel heights live in `DASH_H()` in
 `site/main.js` and the type in the matching media query in `site/styles.css`,
 and the two are meant to be changed together. Measured heights of the hero:
 682px at 1280x700 and 1366x720, 753px at 1512x830.
+
+### The crowd
+
+The strategy diagram in "The population" is live, and it does not go through
+the driver or the worker. It runs `SimCore.Market` on the page at 120 traders,
+one dot each, because it needs every individual switch rather than a sampled
+tape: each realised switch is queued at the simulated time it happened and
+replayed as a dot travelling along its arrow, so the bursts are the model's
+own. A switch the population floor voids is not drawn. Arrow width is the
+switch's current rate; the three gauges are the inputs those rates respond to —
+the opinion index, the trend over τ, and the gap to fundamental value. "Good
+news" and "Bad news" move the fundamental value by thirty news ticks at once
+and never touch the price.
+
+The loop races `requestAnimationFrame` against a timer, and the
+IntersectionObserver only pauses it off screen rather than starting it, so
+neither a tab that delivers no animation frames nor one that never reports an
+intersection can latch it. Under `prefers-reduced-motion` it waits for Play and
+moves dots without a flight.
 
 ## What was available, and what was not
 

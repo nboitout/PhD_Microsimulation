@@ -194,7 +194,7 @@
   <div class="layout">
     <div class="col-text">
     <p class="eyebrow">The population</p>
-    <h2 id="traders-h">Three ways to be wrong</h2>
+    <h2 id="traders-h">Three strategies, six ways to switch</h2>
 
     <p>The market holds a fixed number of traders. At any moment each of them is
     following one of three strategies, and each can change to another.</p>
@@ -217,13 +217,53 @@
     </div>
 
     <div class="col-fig">
-    <figure>
-      <div class="figscroll" id="strategy-diagram"></div>
+    <figure class="crowd">
+      <p class="crowd-clock" id="crowd-clock" aria-hidden="true"></p>
+      <div id="strategy-diagram"></div>
+
+      <div class="crowd-gauges" id="crowd-gauges" aria-hidden="true">
+        <div class="gauge" data-g="herd">
+          <p class="gauge-label">Herding <span class="gauge-value"></span></p>
+          <div class="gauge-track"><span class="gauge-mark"></span></div>
+          <p class="gauge-ends"><span>all bearish</span><span>all bullish</span></p>
+        </div>
+        <div class="gauge" data-g="trend">
+          <p class="gauge-label">Trend <span class="gauge-value"></span></p>
+          <div class="gauge-track"><span class="gauge-mark"></span></div>
+          <p class="gauge-ends"><span>falling</span><span>rising</span></p>
+        </div>
+        <div class="gauge" data-g="gap">
+          <p class="gauge-label">Gap to value <span class="gauge-value"></span></p>
+          <div class="gauge-track"><span class="gauge-mark"></span></div>
+          <p class="gauge-ends"><span>price below</span><span>above</span></p>
+        </div>
+      </div>
+
+      <p class="clockwin crowd-explain" id="crowd-explain"></p>
+
+      <div class="buttonrow">
+        <button class="btn primary" type="button" id="crowd-toggle" aria-pressed="true">Pause</button>
+        <button class="btn" type="button" id="crowd-speed" aria-pressed="false">Fast forward</button>
+        <button class="btn" type="button" id="crowd-good">Good news</button>
+        <button class="btn" type="button" id="crowd-bad">Bad news</button>
+        <button class="btn" type="button" id="crowd-reset">Reset</button>
+      </div>
+
+      <div class="control crowd-control">
+        <label for="crowd-a1">How strongly traders follow the crowd <span class="sym">α₁</span><output for="crowd-a1" id="crowd-a1-out">0.70</output></label>
+        <input type="range" id="crowd-a1" min="0" max="2" step="0.05" value="0.7">
+      </div>
+
       <figcaption>
-        The three strategies and the six ways a trader can move between them.
-        Every switch has its own rate, written <span class="nowrap">β₁</span> to
-        <span class="nowrap">β₆</span>. Point at an arrow, or move to it with the
-        keyboard, to see what drives it.
+        One dot is one trader. Each time the model realises a switch, a dot
+        travels along its arrow, at the moment of simulated time the switch
+        happened — so the switches come in bursts, not at a steady beat. Arrow
+        width is the switch’s current rate, <span class="nowrap">β₁</span> to
+        <span class="nowrap">β₆</span>. The three gauges are what the rates
+        respond to. Push the herding dial up and the chartists pile into one
+        camp; send news and watch the gap pull traders toward the
+        fundamentalists.
+        <span class="provenance">Live in-browser run of a 2026 re-implementation of the 2003 model, at 120 traders rather than the calibrated 400 so that each one can be seen. News moves the fundamental value by thirty of the model’s own news ticks at once. Not a figure from the original paper.</span>
       </figcaption>
     </figure>
     </div>

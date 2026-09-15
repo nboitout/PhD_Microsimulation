@@ -162,7 +162,18 @@
   }
 
   if (window.Figures) {
-    Figures.strategyDiagram(document.getElementById('strategy-diagram'));
+    Figures.strategyDiagram(document.getElementById('strategy-diagram'), {
+      gauges: document.getElementById('crowd-gauges'),
+      clock: document.getElementById('crowd-clock'),
+      explain: document.getElementById('crowd-explain'),
+      toggle: document.getElementById('crowd-toggle'),
+      speed: document.getElementById('crowd-speed'),
+      good: document.getElementById('crowd-good'),
+      bad: document.getElementById('crowd-bad'),
+      reset: document.getElementById('crowd-reset'),
+      herd: document.getElementById('crowd-a1'),
+      herdOut: document.getElementById('crowd-a1-out'),
+    });
     Figures.clockRace(
       document.getElementById('clock-race'),
       document.getElementById('race-status'),
