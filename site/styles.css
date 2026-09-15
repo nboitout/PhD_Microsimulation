@@ -554,6 +554,74 @@ tbody tr:last-child td { border-bottom: 0; }
 
 .paramtable td:first-child { width: 4.5rem; }
 
+/* Uppercase headers must not reach the mathematics: it would turn l_i into
+   L_I and β into a capital beta that reads as B. */
+thead th .katex { text-transform: none; letter-spacing: 0; font-size: 1.25em; }
+
+/* --- The ten events ----------------------------------------------------- */
+/* The transition vectors are spread over one column per state component, so
+   the pattern — which event moves which number, and which way — reads as a
+   shape before any cell is read. */
+
+table.events { font-size: 0.88rem; }
+table.events td { vertical-align: middle; padding-block: 0.3rem; }
+table.events thead th.ev-vec {
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.2rem;
+}
+table.events thead tr:first-child th[rowspan] { vertical-align: bottom; }
+table.events .ev-d {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding-inline: 0.25rem;
+  width: 3.6rem;
+}
+table.events thead .ev-d { font-family: var(--sans); }
+table.events td.ev-d.z { color: var(--rule-strong); }
+table.events td.ev-d.up,
+table.events td.ev-d.dn { font-weight: 600; }
+table.events td.ev-d.up { background: color-mix(in srgb, currentColor 13%, transparent); }
+table.events td.ev-d.dn { background: color-mix(in srgb, currentColor 6%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent); }
+table.events .ev-sym { width: 2.4rem; color: var(--ink-mute); white-space: nowrap; }
+table.events td:last-child { white-space: nowrap; padding-left: 0.6rem; }
+table.events tr.ev-group th {
+  font-family: var(--sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 1rem 0 0.35rem;
+  border-bottom: 1px solid var(--rule-strong);
+}
+table.events tr.ev-group th .katex { font-size: 1.1em; }
+table.events tbody tr:has(+ tr.ev-group) td { border-bottom: 0; }
+
+.k-opt { color: var(--optimist); }
+.k-pess { color: var(--pessimist); }
+.k-fund { color: var(--fundamentalist); }
+.k-price { color: var(--price); }
+.k-fv { color: var(--fundamental); }
+/* On a phone the table cannot hold seven columns, and a rate scrolled out of
+   view is the worst thing to lose. Each rate is repeated under its event and
+   the rate column is dropped. */
+table.events .ev-rate-inline { display: none; }
+@media (max-width: 640px) {
+  table.events th:last-child[rowspan],
+  table.events td.ev-rate { display: none; }
+  table.events .ev-rate-inline { display: block; margin-top: 0.15rem; color: var(--ink); font-weight: 400; }
+  table.events .ev-d { width: 2.7rem; font-size: 0.72rem; padding-inline: 0.1rem; }
+  table.events .ev-sym { width: 1.8rem; }
+  table.events td { padding-right: 0.4rem; }
+}
+table.events td > .k-opt,
+table.events td > .k-pess,
+table.events td > .k-fund { font-weight: 600; }
+
 /* --- Lists -------------------------------------------------------------- */
 
 ol.facts { counter-reset: fact; list-style: none; padding: 0; margin: 1.2rem 0; }
@@ -603,18 +671,6 @@ ul.strategies li.fundamentalist::before { background: var(--fundamentalist); }
 .ledger > div:last-child { border-bottom: 1px solid var(--rule); }
 .ledger h3 { margin: 0 0 0.35rem; }
 .ledger p { margin: 0; font-size: 0.97rem; color: var(--ink-soft); }
-.ledger .tag {
-  font-family: var(--sans);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.1rem 0.45rem;
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
-  color: var(--ink-mute);
-  margin-right: 0.5rem;
-  vertical-align: 0.12em;
-}
 
 /* --- Controls ----------------------------------------------------------- */
 

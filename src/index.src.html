@@ -37,7 +37,7 @@
       <a href="#events">Ten events</a>
       <a href="#produces">What comes out</a>
       <a href="#calibration">Calibration</a>
-      <a href="#ledger">Honest ledger</a>
+      <a href="#ledger">Conclusions</a>
       <a href="#playground">Try it</a>
       <a href="#provenance">Provenance</a>
     </nav>
@@ -600,22 +600,39 @@
         jump rate. The ten transition vectors and their rates:</p>
 
         <div class="tablewrap">
-          <table>
-            <caption>The ten events. Table transcribed from the chapter.</caption>
+          <table class="events">
+            <caption>The ten events. Transcribed from the chapter, with each
+            transition vector \(l_i\) spread across the four components of the
+            state it changes. The fundamentalist share is not a component: it
+            follows by difference.</caption>
             <thead>
-              <tr><th class="num">i</th><th>Event</th><th>Transition vector \(l_i\)</th><th>Rate \(\beta_i\)</th></tr>
+              <tr>
+                <th rowspan="2" class="ev-sym"><span class="sr-only">Symbol</span></th>
+                <th rowspan="2">Event</th>
+                <th colspan="4" class="ev-vec">Transition vector \(l_i\)</th>
+                <th rowspan="2">Rate \(\beta_i\)</th>
+              </tr>
+              <tr>
+                <th class="ev-d">\(n_+/n\)</th>
+                <th class="ev-d">\(n_-/n\)</th>
+                <th class="ev-d">\(p\)</th>
+                <th class="ev-d">\(p_f\)</th>
+              </tr>
             </thead>
             <tbody>
-              <tr><td class="num">1</td><td>pessimist → optimist</td><td class="num">(1/n, −1/n, 0, 0)</td><td>\(\nu_1\frac{n_-}{n}\frac{n_c}{n}e^{U_1}\)</td></tr>
-              <tr><td class="num">2</td><td>optimist → pessimist</td><td class="num">(−1/n, 1/n, 0, 0)</td><td>\(\nu_1\frac{n_+}{n}\frac{n_c}{n}e^{-U_1}\)</td></tr>
-              <tr><td class="num">3</td><td>fundamentalist → optimist</td><td class="num">(1/n, 0, 0, 0)</td><td>\(\nu_2\frac{n_f}{n}\frac{n_+}{n}e^{U_{2,1}}\)</td></tr>
-              <tr><td class="num">4</td><td>optimist → fundamentalist</td><td class="num">(−1/n, 0, 0, 0)</td><td>\(\nu_2\frac{n_f}{n}\frac{n_+}{n}e^{-U_{2,1}}\)</td></tr>
-              <tr><td class="num">5</td><td>fundamentalist → pessimist</td><td class="num">(0, 1/n, 0, 0)</td><td>\(\nu_2\frac{n_f}{n}\frac{n_-}{n}e^{U_{2,2}}\)</td></tr>
-              <tr><td class="num">6</td><td>pessimist → fundamentalist</td><td class="num">(0, −1/n, 0, 0)</td><td>\(\nu_2\frac{n_-}{n}\frac{n_f}{n}e^{-U_{2,2}}\)</td></tr>
-              <tr><td class="num">7</td><td>price up one tick</td><td class="num">(0, 0, 0.1, 0)</td><td>\(\beta\,ED\)</td></tr>
-              <tr><td class="num">8</td><td>price down one tick</td><td class="num">(0, 0, −0.1, 0)</td><td>\(-\beta\,ED\)</td></tr>
-              <tr><td class="num">9</td><td>fundamental value up</td><td class="num">(0, 0, 0, 0.1)</td><td>\(\nu_3\)</td></tr>
-              <tr><td class="num">10</td><td>fundamental value down</td><td class="num">(0, 0, 0, −0.1)</td><td>\(\nu_3\)</td></tr>
+              <tr class="ev-group"><th colspan="7" scope="colgroup">A trader switches strategy — one trader, \(1/n\) of the population</th></tr>
+              <tr><td class="ev-sym">\(\beta_1\)</td><td><span class="k-pess">pessimist</span> → <span class="k-opt">optimist</span><span class="ev-rate-inline">\(\nu_1\dfrac{n_-}{n}\dfrac{n_c}{n}e^{U_1}\)</span></td><td class="ev-d up k-opt">+1/n</td><td class="ev-d dn k-pess">−1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_1\dfrac{n_-}{n}\dfrac{n_c}{n}e^{U_1}\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_2\)</td><td><span class="k-opt">optimist</span> → <span class="k-pess">pessimist</span><span class="ev-rate-inline">\(\nu_1\dfrac{n_+}{n}\dfrac{n_c}{n}e^{-U_1}\)</span></td><td class="ev-d dn k-opt">−1/n</td><td class="ev-d up k-pess">+1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_1\dfrac{n_+}{n}\dfrac{n_c}{n}e^{-U_1}\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_3\)</td><td><span class="k-fund">fundamentalist</span> → <span class="k-opt">optimist</span><span class="ev-rate-inline">\(\nu_2\dfrac{n_f}{n}\dfrac{n_+}{n}e^{U_{2,1}}\)</span></td><td class="ev-d up k-opt">+1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_2\dfrac{n_f}{n}\dfrac{n_+}{n}e^{U_{2,1}}\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_4\)</td><td><span class="k-opt">optimist</span> → <span class="k-fund">fundamentalist</span><span class="ev-rate-inline">\(\nu_2\dfrac{n_f}{n}\dfrac{n_+}{n}e^{-U_{2,1}}\)</span></td><td class="ev-d dn k-opt">−1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_2\dfrac{n_f}{n}\dfrac{n_+}{n}e^{-U_{2,1}}\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_5\)</td><td><span class="k-fund">fundamentalist</span> → <span class="k-pess">pessimist</span><span class="ev-rate-inline">\(\nu_2\dfrac{n_f}{n}\dfrac{n_-}{n}e^{U_{2,2}}\)</span></td><td class="ev-d z">0</td><td class="ev-d up k-pess">+1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_2\dfrac{n_f}{n}\dfrac{n_-}{n}e^{U_{2,2}}\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_6\)</td><td><span class="k-pess">pessimist</span> → <span class="k-fund">fundamentalist</span><span class="ev-rate-inline">\(\nu_2\dfrac{n_-}{n}\dfrac{n_f}{n}e^{-U_{2,2}}\)</span></td><td class="ev-d z">0</td><td class="ev-d dn k-pess">−1/n</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-rate">\(\nu_2\dfrac{n_-}{n}\dfrac{n_f}{n}e^{-U_{2,2}}\)</td></tr>
+              <tr class="ev-group"><th colspan="7" scope="colgroup">The market maker revises the price — one tick of 0.1</th></tr>
+              <tr><td class="ev-sym">\(\beta_7\)</td><td>price up one tick<span class="ev-rate-inline">\(\beta\,ED\)</span></td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d up k-price">+0.1</td><td class="ev-d z">0</td><td class="ev-rate">\(\beta\,ED\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_8\)</td><td>price down one tick<span class="ev-rate-inline">\(-\beta\,ED\)</span></td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d dn k-price">−0.1</td><td class="ev-d z">0</td><td class="ev-rate">\(-\beta\,ED\)</td></tr>
+              <tr class="ev-group"><th colspan="7" scope="colgroup">News arrives — the fundamental value moves one tick of 0.1</th></tr>
+              <tr><td class="ev-sym">\(\beta_9\)</td><td>fundamental value up<span class="ev-rate-inline">\(\nu_3\)</span></td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d up k-fv">+0.1</td><td class="ev-rate">\(\nu_3\)</td></tr>
+              <tr><td class="ev-sym">\(\beta_{10}\)</td><td>fundamental value down<span class="ev-rate-inline">\(\nu_3\)</span></td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d z">0</td><td class="ev-d dn k-fv">−0.1</td><td class="ev-rate">\(\nu_3\)</td></tr>
             </tbody>
           </table>
         </div>
@@ -629,7 +646,7 @@
         <span class="nowrap">\(C\)</span> that they switch, with probability
         <span class="nowrap">\(\nu_1 e^{U_1}\)</span>. Then</p>
 
-        <div class="mathblock">$$P(A \cap B \cap C) = P(C \mid B,A)\,P(B \mid A)\,P(A) = \nu_1\frac{n_-}{n}\frac{n_c}{n}e^{U_1}$$</div>
+        <div class="mathblock">$$\begin{aligned} P(A \cap B \cap C) &= P(C \mid B,A)\,P(B \mid A)\,P(A) \\ &= \nu_1\frac{n_-}{n}\frac{n_c}{n}e^{U_1} \end{aligned}$$</div>
 
         <p>Rates 7 and 8 reflect the market maker's relative impatience to revise
         the price. Rates 9 and 10 govern the arrival of information about
@@ -869,65 +886,57 @@
 </section>
 
 <!-- ===================================================================== -->
-<!-- 9. The ledger                                                         -->
+<!-- 9. The chapter's conclusions                                          -->
+<!--                                                                       -->
+<!-- The chapter's own conclusions, in its own wording and without any     -->
+<!-- verdict added by this presentation. Nothing measured on the           -->
+<!-- re-implementation belongs here.                                       -->
 <!-- ===================================================================== -->
 <section id="ledger" aria-labelledby="ledger-h">
   <div class="wrap">
-    <p class="eyebrow">The honest ledger</p>
-    <h2 id="ledger-h">What worked and what didn't</h2>
-
-    <p>The chapter reports its own difficulties, in its own words. They are set
-    out here without softening, because a model that says where it falls short
-    is easier to trust than one that does not.</p>
+    <p class="eyebrow">Conclusions</p>
+    <h2 id="ledger-h">What the chapter concludes</h2>
 
     <div class="ledger">
       <div>
-        <h3><span class="tag">Worked</span>Long memory in volatility and volume</h3>
-        <p>For the chosen parameter values, long-term dependence in both
-        volatility and volume is well reproduced by the simulation.</p>
+        <h3>Long memory in volatility and volume</h3>
+        <p>Long-term dependence in both volatility and volume is well reproduced
+        by the simulation for the selected parameter values.</p>
       </div>
       <div>
-        <h3><span class="tag">Worked</span>A multifractal signature</h3>
-        <p>The scaling functions reveal, in the chapter's own phrase, highly
-        convincing multifractal behaviour.</p>
+        <h3>A multifractal signature</h3>
+        <p>The scaling functions reveal highly convincing multifractal
+        behaviour.</p>
       </div>
       <div>
-        <h3><span class="tag">Problem</span>The parameters had to be fine-tuned</h3>
-        <p>Generating realistic price patterns required substantial fine-tuning,
-        which the chapter flags as an issue often neglected. It raises the
-        question of whether real markets converge on such values despite their
-        diversity, and follows Giardina and Bouchaud [2002] in arguing that some
-        underlying self-organising mechanism must be doing that work.</p>
-      </div>
-      <div>
-        <h3><span class="tag">Problem</span>A trade-off between tails and memory</h3>
-        <p>Surprisingly, a trade-off emerged during calibration between
+        <h3>A trade-off between tails and memory</h3>
+        <p>Surprisingly, during calibration a trade-off emerges between
         reproducing fat tails and reproducing long-term dependence in volatility.
         Getting the autocorrelation function of volatility right meant avoiding
         tails that were too fat — and very fat tails are almost absent from the
         reference currency series in any case.</p>
       </div>
       <div>
-        <h3><span class="tag">Problem</span>The simulated market was too predictable</h3>
-        <p>Measured against the panel of nine currencies used as a benchmark
-        during calibration, the simulated trajectories remain too predictable.
-        The chapter states this as its clear conclusion.</p>
+        <h3>Predictability</h3>
+        <p>The conclusion is clear: relative to a panel of nine currencies used
+        as a benchmark during calibration, the simulated trajectories remain too
+        predictable.</p>
       </div>
       <div>
-        <h3><span class="tag">Problem</span>Linear structure the first fact rules out</h3>
-        <p>The first of the six stylized facts asks for a unit root: no
-        exploitable linear correlation in returns beyond a few minutes. The run
-        shown above does not deliver it: its daily returns have a first-order
-        autocorrelation of -0.35, which a discrete quote moving one tick at a time
-        toward the imbalance will produce. That is a property of the
-        re-implementation, measured here; the chapter's own verdict on its
-        samples is the entry above.</p>
+        <h3>Fine-tuning the parameters</h3>
+        <p>Whatever the degree of heterogeneity among agents in an artificial
+        market, fine-tuning the simulation parameters is an important issue that
+        is often neglected. Because generating realistic price patterns requires
+        substantial fine-tuning, this raises the question of whether real markets
+        converge toward these parameter values despite their diversity. Giardina
+        and Bouchaud [2002] emphasize this point, arguing that an underlying
+        self-organizing mechanism must be at work.</p>
       </div>
       <div>
-        <h3><span class="tag">Context</span>Others' estimates run high</h3>
-        <p>The chapter notes that Lux and Marchesi's [2000] long-memory estimates
-        regularly exceed 0.5, while the exchange-rate series they set out to
-        reproduce are more regular than that.</p>
+        <h3>Long-memory estimates elsewhere</h3>
+        <p>Lux and Marchesi's [2000] long-memory estimates regularly exceed 0.5,
+        while the exchange-rate series they set out to reproduce are more regular
+        than that.</p>
       </div>
     </div>
 
