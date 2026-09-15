@@ -173,6 +173,8 @@
       reset: document.getElementById('crowd-reset'),
       herd: document.getElementById('crowd-a1'),
       herdOut: document.getElementById('crowd-a1-out'),
+      strip: document.getElementById('crowd-price'),
+      status: document.getElementById('crowd-status'),
     });
     Figures.clockRace(
       document.getElementById('clock-race'),

@@ -239,15 +239,26 @@
         </div>
       </div>
 
+      <div class="crowd-strip">
+        <p class="dash-label">price against fundamental value
+          <span class="dash-legend">
+            <span class="swatch price"><b>price</b></span>
+            <span class="swatch fundamental dashed"><b>fundamental value</b></span>
+          </span>
+        </p>
+        <canvas id="crowd-price" aria-hidden="true"></canvas>
+      </div>
+
       <p class="clockwin crowd-explain" id="crowd-explain"></p>
 
-      <div class="buttonrow">
+      <div class="buttonrow crowd-buttons">
         <button class="btn primary" type="button" id="crowd-toggle" aria-pressed="true">Pause</button>
         <button class="btn" type="button" id="crowd-speed" aria-pressed="false">Fast forward</button>
         <button class="btn" type="button" id="crowd-good">Good news</button>
         <button class="btn" type="button" id="crowd-bad">Bad news</button>
         <button class="btn" type="button" id="crowd-reset">Reset</button>
       </div>
+      <p class="crowd-status" id="crowd-status" role="status"></p>
 
       <div class="control crowd-control">
         <label for="crowd-a1">How strongly traders follow the crowd <span class="sym">α₁</span><output for="crowd-a1" id="crowd-a1-out">0.70</output></label>

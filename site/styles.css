@@ -696,6 +696,28 @@ ul.plain li::before {
   margin: 0.3rem 0 0;
 }
 .crowd-explain { min-height: 3.4em; }
+.crowd-strip { margin-top: 1.1rem; }
+.crowd-strip canvas { display: block; width: 100%; }
+.crowd-buttons { margin-bottom: 0.5rem; }
+.crowd-buttons .btn { transition: transform 0.08s ease-out; }
+.crowd-buttons .btn:active { transform: translateY(1px) scale(0.97); }
+/* What the last click did. Highlighted briefly so a click that changes
+   something subtle is still seen to have landed. */
+.crowd-status {
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+  min-height: 2.8em;
+  margin: 0 0 1rem;
+  padding: 0.2rem 0 0.2rem 0.7rem;
+  border-left: 2px solid transparent;
+  transition: border-color 0.6s ease-out, background-color 0.6s ease-out;
+}
+.crowd-status.is-fresh {
+  border-left-color: var(--highlight);
+  background: color-mix(in srgb, var(--highlight) 10%, transparent);
+  transition: none;
+}
 @media (max-width: 480px) {
   .crowd-gauges { grid-template-columns: minmax(0, 1fr); }
 }

@@ -114,6 +114,13 @@ the opinion index, the trend over τ, and the gap to fundamental value. "Good
 news" and "Bad news" move the fundamental value by thirty news ticks at once
 and never touch the price.
 
+The price closes most of a news gap within about a simulated hour, which at
+normal speed is a few seconds, and the crowd's shares barely change. So a strip
+under the gauges draws price against fundamental value, with each shock marked,
+and a status line under the buttons says what the last click did. Reset draws a
+new seed: rebuilding from the same one produced a market indistinguishable from
+the one being watched, and the button appeared not to work.
+
 The loop races `requestAnimationFrame` against a timer, and the
 IntersectionObserver only pauses it off screen rather than starting it, so
 neither a tab that delivers no animation frames nor one that never reports an

@@ -89,15 +89,32 @@
     let countEls = {};
     let hover = -1;
     const pending = [];      // switches waiting to be replayed: { at, s }
+    // Price and fundamental at every price or news event, for the strip, and
+    // the news shocks sent from the buttons, marked on it.
+    const tape = { t: [], p: [], f: [] };
+    const shocks = [];
+    let seed = 20030601;
 
     function newMarket() {
-      market = new SimCore.Market({ N: CROWD_N, a1 }, 20030601);
+      market = new SimCore.Market({ N: CROWD_N, a1 }, seed);
+      tape.t.length = tape.p.length = tape.f.length = 0;
+      shocks.length = 0;
       // Settle for a simulated day, so the crowd does not open at an exact
       // three-way split that the model would never otherwise show.
       let guard = 0;
       while (market.t < 1 && guard++ < 200000) market.step();
       switches = 0;
       pending.length = 0;
+      record();
+    }
+
+    function record() {
+      tape.t.push(market.t); tape.p.push(market.p); tape.f.push(market.pf);
+      // Keep four simulated days, which covers the widest window drawn.
+      if (tape.t.length > 4000 && tape.t[0] < market.t - 4) {
+        const cut = tape.t.findIndex((t) => t >= market.t - 4);
+        tape.t.splice(0, cut); tape.p.splice(0, cut); tape.f.splice(0, cut);
+      }
     }
 
     function counts() {
@@ -287,7 +304,8 @@
       while (market.t < target && guard++ < 20000) {
         const o = market.nPlus, m = market.nMinus;
         const win = market.step();
-        if (win < 0 || win > 5) continue;
+        if (win >= 6) { record(); continue; }
+        if (win < 0) continue;
         // A switch that would break a population floor is void in the model.
         if (market.nPlus === o && market.nMinus === m) continue;
         pending.push({ at: market.t, s: SWITCHES[win] });
@@ -379,6 +397,91 @@
       }
     }
 
+    // Price against fundamental value over the recent past, drawn up to the
+    // display clock so it stays in step with the dots. This is where a news
+    // shock shows: the dashed value steps, and the price chases it.
+    const WINDOW = { watch: 0.25, fast: 3 };
+    function paintStrip() {
+      const cv = ui && ui.strip;
+      if (!cv || !tape.t.length) return;
+      const Wd = Math.max(200, Math.round(cv.parentNode.clientWidth || 400));
+      const Hd = 72;
+      const dpr = Math.min(global.devicePixelRatio || 1, 2);
+      if (cv.width !== Wd * dpr || cv.height !== Hd * dpr) {
+        cv.width = Wd * dpr; cv.height = Hd * dpr; cv.style.height = Hd + 'px';
+      }
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, Wd, Hd);
+
+      const now = Math.min(simClock, market.t);
+      const t0 = now - WINDOW[speed];
+      let i0 = 0;
+      while (i0 < tape.t.length - 1 && tape.t[i0 + 1] < t0) i0++;
+      let i1 = tape.t.length - 1;
+      while (i1 > i0 && tape.t[i1] > now) i1--;
+
+      let lo = Infinity, hi = -Infinity;
+      for (let i = i0; i <= i1; i++) {
+        lo = Math.min(lo, tape.p[i], tape.f[i]); hi = Math.max(hi, tape.p[i], tape.f[i]);
+      }
+      const pad = Math.max(0.4, (hi - lo) * 0.15);
+      lo -= pad; hi += pad;
+      const L = 34, R = 4, T = 6, B = 6;
+      const X = (t) => L + ((Math.max(t, t0) - t0) / (now - t0 || 1)) * (Wd - L - R);
+      const Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (Hd - T - B);
+
+      ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = C.cssVar('--ink-mute');
+      ctx.strokeStyle = C.cssVar('--rule');
+      ctx.lineWidth = 1;
+      ctx.textAlign = 'right';
+      for (const v of C.niceTicks(lo, hi, 2)) {
+        ctx.beginPath(); ctx.moveTo(L, Math.round(Y(v)) + 0.5); ctx.lineTo(Wd - R, Math.round(Y(v)) + 0.5); ctx.stroke();
+        ctx.fillText(v.toFixed(0), L - 5, Y(v) + 3.5);
+      }
+
+      ctx.strokeStyle = C.cssVar('--highlight');
+      ctx.fillStyle = C.cssVar('--highlight');
+      ctx.textAlign = 'left';
+      for (const sh of shocks) {
+        if (sh.t < t0 || sh.t > now) continue;
+        const x = Math.round(X(sh.t)) + 0.5;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, Hd - B); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillText(sh.label, Math.min(x + 4, Wd - 64), T + 9);
+      }
+
+      const stepLine = (arr, colour, dash) => {
+        ctx.setLineDash(dash);
+        ctx.strokeStyle = colour;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(X(tape.t[i0]), Y(arr[i0]));
+        for (let i = i0 + 1; i <= i1; i++) {
+          ctx.lineTo(X(tape.t[i]), Y(arr[i - 1]));
+          ctx.lineTo(X(tape.t[i]), Y(arr[i]));
+        }
+        ctx.lineTo(X(now), Y(arr[i1]));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+      stepLine(tape.f, C.cssVar('--fundamental'), [4, 3]);
+      stepLine(tape.p, C.cssVar('--price'), []);
+    }
+
+    let statusTimer = 0;
+    function say(message) {
+      if (!ui || !ui.status) return;
+      ui.status.textContent = message;
+      ui.status.classList.remove('is-fresh');
+      void ui.status.offsetWidth; // restart the highlight
+      ui.status.classList.add('is-fresh');
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => ui.status.classList.remove('is-fresh'), 1600);
+    }
+
     function explain() {
       if (!ui || !ui.explain) return;
       const box = ui.explain;
@@ -439,6 +542,7 @@
       readRates(false);
       paintArrows();
       paintGauges();
+      paintStrip();
       if (hover >= 0 && now - lastExplain > 400) { lastExplain = now; explain(); }
       schedule();
     }
@@ -470,17 +574,38 @@
     register(node, draw);
     explain();
     paintGauges();
+    paintStrip();
+    global.addEventListener('resize', paintStrip);
+    document.addEventListener('themechange', paintStrip);
 
-    if (ui && ui.toggle) ui.toggle.addEventListener('click', () => setRunning(!running));
+    if (ui && ui.toggle) {
+      ui.toggle.addEventListener('click', () => {
+        setRunning(!running);
+        say(running ? 'Running again.' : 'Paused. Point at an arrow to read its rate as the market stands.');
+      });
+    }
     if (ui && ui.speed) {
       ui.speed.addEventListener('click', () => {
         speed = speed === 'watch' ? 'fast' : 'watch';
         ui.speed.setAttribute('aria-pressed', String(speed === 'fast'));
         simClock = Math.min(simClock, market.t);
+        say(speed === 'fast'
+          ? 'Fast forward: about a simulated day every five seconds, so the price and the crowd have time to move.'
+          : 'Back to normal speed: about twenty minutes of simulated trading a second, so single switches can be followed.');
+        paintStrip();
+        if (!running) setRunning(true);
       });
     }
     if (ui && ui.reset) {
       ui.reset.addEventListener('click', () => {
+        // A new seed each time: the same seed would rebuild a market that looks
+        // just like the one being watched, and the reset would seem to do nothing.
+        seed = (Math.random() * 0x7fffffff) >>> 0 || 1;
+        a1 = 0.7;
+        if (ui.herd) ui.herd.value = String(a1);
+        if (ui.herdOut) ui.herdOut.textContent = a1.toFixed(2);
+        speed = 'watch';
+        if (ui.speed) ui.speed.setAttribute('aria-pressed', 'false');
         newMarket();
         assignAll();
         readRates(true);
@@ -488,6 +613,10 @@
         paintGauges();
         explain();
         simClock = market.t; last = 0;
+        paintStrip();
+        say('Reset: a new market of ' + CROWD_N + ' traders — ' + market.nPlus + ' optimists, ' +
+          market.nMinus + ' pessimists, ' + market.nFund + ' fundamentalists — with herding back at 0.70.');
+        if (!running) setRunning(true);
       });
     }
     // News moves the fundamental value, never the price: this is thirty of the
@@ -495,9 +624,19 @@
     // responds to the gap by its own rules.
     const news = (sign) => () => {
       flush();
+      const before = market.pf;
       market.pf = Math.max(1, market.pf + sign * 30 * market.P.tick);
+      record();
+      shocks.push({ t: market.t, label: sign > 0 ? 'good news' : 'bad news' });
+      if (shocks.length > 12) shocks.shift();
       readRates(true);
       paintGauges();
+      paintStrip();
+      const gap = 100 * (market.p - market.pf) / market.pf;
+      say((sign > 0 ? 'Good news' : 'Bad news') + ': the fundamental value ' + (sign > 0 ? 'rises' : 'falls') + ' from ' +
+        before.toFixed(1) + ' to ' + market.pf.toFixed(1) + '. The price, at ' + market.p.toFixed(1) +
+        ', is now ' + Math.abs(gap).toFixed(1) + '% ' + (gap < 0 ? 'below' : 'above') +
+        ' it. On the chart, watch the fundamentalists pull the price toward the new value, usually within the simulated hour.');
       if (!running) setRunning(true);
     };
     if (ui && ui.good) ui.good.addEventListener('click', news(+1));
